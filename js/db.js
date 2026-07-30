@@ -12,7 +12,7 @@
 // Adres tespiti:
 //  1. Eğer sayfa PocketBase'ten servis ediliyorsa (pb_public), origin = PB adresidir.
 //  2. Aksi halde (yerel dosya / farklı sunucu) elle PB_URL_OVERRIDE kullanılır.
-const PB_URL_OVERRIDE = 'http://pocketbase-luc2wdg46yxt9tuj99ewy6on.89.144.20.164.sslip.io:8080'; // VPS PocketBase adresi
+const PB_URL_OVERRIDE = 'http://pocketbase-luc2wdg46yxt9tuj99ewy6on.89.144.20.164.sslip.io'; // VPS PocketBase adresi
 
 function pbBaseUrl() {
   if (PB_URL_OVERRIDE) return PB_URL_OVERRIDE.replace(/\/$/, '');
