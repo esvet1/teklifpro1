@@ -63,11 +63,69 @@
 </head>
 <body>
 
-<!-- =========================================================
-     UYGULAMA KABUĞU
-     Next.js: app/layout.tsx → AppShell component
-     ========================================================= -->
-<div class="app-shell">
+<!-- GİRİŞ / KAYIT EKRANI (SaaS Auth) -->
+<div id="auth-container" class="auth-container">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="brand">teklif<span>.</span>pro</div>
+      <div class="tagline">Proforma Fiyat Teklifi</div>
+    </div>
+    
+    <!-- Giriş Formu -->
+    <div id="auth-login-box">
+      <h2 class="auth-title">Giriş Yap</h2>
+      <p class="auth-subtitle">Hesabınıza erişmek için bilgilerinizi girin.</p>
+      
+      <form id="auth-login-form" onsubmit="handleLogin(event)">
+        <div class="form-field">
+          <label class="form-label">E-posta</label>
+          <input type="email" class="form-input" id="auth-login-email" required placeholder="mail@domain.com">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Şifre</label>
+          <input type="password" class="form-input" id="auth-login-password" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn btn-primary w-full mt-2" id="btn-login-submit">Giriş Yap</button>
+      </form>
+      
+      <div class="auth-switch">
+        Hesabınız yok mu? <a href="#" onclick="toggleAuthBox('register')">Yeni Hesap Oluştur</a>
+      </div>
+    </div>
+
+    <!-- Kayıt Formu -->
+    <div id="auth-register-box" style="display:none">
+      <h2 class="auth-title">Kayıt Ol</h2>
+      <p class="auth-subtitle">Hemen ücretsiz hesabınızı oluşturun.</p>
+      
+      <form id="auth-register-form" onsubmit="handleRegister(event)">
+        <div class="form-field">
+          <label class="form-label">Ad Soyad</label>
+          <input type="text" class="form-input" id="auth-register-name" required placeholder="Adınız Soyadınız">
+        </div>
+        <div class="form-field">
+          <label class="form-label">E-posta</label>
+          <input type="email" class="form-input" id="auth-register-email" required placeholder="mail@domain.com">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Şifre</label>
+          <input type="password" class="form-input" id="auth-register-password" required placeholder="En az 8 karakter">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Şifre Tekrar</label>
+          <input type="password" class="form-input" id="auth-register-password-confirm" required placeholder="Şifrenizi doğrulayın">
+        </div>
+        <button type="submit" class="btn btn-primary w-full mt-2" id="btn-register-submit">Kayıt Ol</button>
+      </form>
+      
+      <div class="auth-switch">
+        Zaten üye misiniz? <a href="#" onclick="toggleAuthBox('login')">Giriş Yap</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app-shell" style="display:none">
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
@@ -114,7 +172,16 @@
       </div>
     </nav>
 
-    <div class="sidebar-footer">v1.0 · localStorage</div>
+    <div class="sidebar-footer" style="display:flex; flex-direction:column; gap:8px;">
+      <div id="sidebar-user-info" style="font-size:0.75rem; color:var(--text-muted); word-break:break-all;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+        <span>v1.0 · PocketBase</span>
+        <a href="#" onclick="handleLogout(event)" style="color:var(--danger); font-size:0.75rem; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:4px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Çıkış
+        </a>
+      </div>
+    </div>
   </aside>
 
   <!-- Sidebar overlay (mobil) -->
