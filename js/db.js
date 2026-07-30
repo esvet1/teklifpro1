@@ -1,4 +1,4 @@
-'use strict';
+'use strict'; // v2.1
 
 // =========================================================
 // DB — PocketBase veri katmanı (v2 — çoklu firma + özel para + VPS)
