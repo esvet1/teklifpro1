@@ -1,0 +1,2249 @@
+/* =========================================================
+   CSS CUSTOM PROPERTIES — Design Tokens
+   Next.js: tailwind.config.ts extend.colors'a taşınacak
+   ========================================================= */
+:root {
+  --bg:           #f5f5f7;
+  --surface:      #ffffff;
+  --surface2:     #f0f0f4;
+  --surface3:     #e8e8ee;
+  --border:       #e0e0e8;
+  --border-light: #c8c8d8;
+  --text:         #111118;
+  --text-muted:   #555568;
+  --text-dim:     #9999b0;
+  --accent:       #059669;
+  --accent-dim:   #047857;
+  --accent-glow:  rgba(5,150,105,0.10);
+  --accent-rgb:   5,150,105;
+  --danger:       #e03131;
+  --success:      #2f9e44;
+  --warning:      #e67700;
+  --info:         #1971c2;
+  --radius:       10px;
+  --radius-lg:    16px;
+  --shadow:       0 1px 4px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-sm:    0 1px 3px rgba(0,0,0,0.07);
+  --font-display: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --sidebar-w:    220px;
+  --topbar-h:     64px;
+}
+/* Renk temaları */
+[data-color="mavi"]    { --accent:#2563eb; --accent-dim:#1d4ed8; --accent-glow:rgba(37,99,235,.10);  --accent-rgb:37,99,235; }
+[data-color="mor"]     { --accent:#7c3aed; --accent-dim:#6d28d9; --accent-glow:rgba(124,58,237,.10); --accent-rgb:124,58,237; }
+[data-color="yesil"]   { --accent:#059669; --accent-dim:#047857; --accent-glow:rgba(5,150,105,.10);  --accent-rgb:5,150,105; }
+[data-color="turuncu"] { --accent:#ea580c; --accent-dim:#c2410c; --accent-glow:rgba(234,88,12,.10);  --accent-rgb:234,88,12; }
+[data-color="siyah"]   { --accent:#111118; --accent-dim:#000000; --accent-glow:rgba(17,17,24,.08);   --accent-rgb:17,17,24; }
+[data-color="pembe"]   { --accent:#db2777; --accent-dim:#be185d; --accent-glow:rgba(219,39,119,.10); --accent-rgb:219,39,119; }
+/* Font temaları */
+[data-font="syne"]     { --font-display:'Syne',sans-serif;           --font-body:'DM Sans',sans-serif; }
+[data-font="playfair"] { --font-display:'Playfair Display',serif;    --font-body:'Lato',sans-serif; }
+[data-font="space"]    { --font-display:'Space Grotesk',sans-serif;  --font-body:'Inter',sans-serif; }
+[data-font="fraunces"] { --font-display:'Fraunces',serif;            --font-body:'Nunito',sans-serif; }
+[data-font="bebas"]    { --font-display:'Bebas Neue',sans-serif;     --font-body:'Barlow',sans-serif; }
+[data-font="outfit"]   { --font-display:'Outfit',sans-serif;         --font-body:'Poppins',sans-serif; }
+
+/* =========================================================
+   RESET & BASE
+   ========================================================= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+button { cursor: pointer; font-family: var(--font-body); border: none; outline: none; }
+input, textarea, select { font-family: var(--font-body); outline: none; border: none; }
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; }
+ul { list-style: none; }
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface2); }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+.app-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* =========================================================
+   SIDEBAR
+   Next.js: components/layout/Sidebar.tsx
+   ========================================================= */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  padding: 0 20px;
+  height: var(--topbar-h);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sidebar-logo .brand {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.sidebar-logo .brand span {
+  color: var(--accent);
+}
+.sidebar-logo .tagline {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+/* Next.js: NavItem component */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.nav-item:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+.nav-item.active {
+  background: var(--accent-glow);
+  color: var(--accent);
+  font-weight: 500;
+}
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.5;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.nav-item:hover .nav-icon { opacity: 0.8; }
+
+.nav-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.sidebar-footer {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
+.main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* =========================================================
+   TOPBAR
+   Next.js: components/layout/TopBar.tsx
+   ========================================================= */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.topbar-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.topbar-sub {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-left: 2px;
+}
+.topbar-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+
+/* =========================================================
+   CONTENT AREA
+   ========================================================= */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+}
+
+/* Pages — displayed/hidden via JS */
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.2s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================
+   BUTTONS
+   Next.js: components/ui/Button.tsx
+   ========================================================= */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+.btn-primary:hover { background: var(--accent-dim); transform: translateY(-1px); }
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--surface2); color: var(--text); border-color: var(--border-light); }
+.btn-danger {
+  background: rgba(255,71,87,0.12);
+  color: var(--danger);
+  border: 1px solid rgba(255,71,87,0.2);
+}
+.btn-danger:hover { background: rgba(255,71,87,0.2); }
+.btn-sm { padding: 6px 12px; font-size: 0.78rem; }
+.btn-icon {
+  width: 34px; height: 34px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+}
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+/* =========================================================
+   STAT CARDS — Dashboard
+   Next.js: components/dashboard/StatCard.tsx
+   ========================================================= */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--border-light); }
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 60px; height: 60px;
+  background: var(--accent-glow);
+  border-radius: 50%;
+  transform: translate(20px, -20px);
+}.stat-label {
+  font-family: var(--font-body);
+  font-size: 0.73rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.stat-sub {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* =========================================================
+   TABLE
+   Next.js: components/ui/DataTable.tsx
+   ========================================================= */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+thead th {
+  background: var(--surface2);
+  padding: 11px 16px;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+tbody tr {
+  border-top: 1px solid var(--border);
+  transition: background 0.1s;
+}
+tbody tr:hover { background: var(--surface2); }
+tbody td {
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  color: var(--text-muted);
+  vertical-align: middle;
+}
+tbody td:first-child { color: var(--text); font-weight: 500; }
+.td-actions { display: flex; gap: 6px; align-items: center; }
+
+/* =========================================================
+   BADGE
+   Next.js: components/ui/Badge.tsx
+   ========================================================= */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.badge-green  { background: rgba(46,213,115,0.12); color: var(--success); }
+.badge-yellow { background: rgba(255,165,2,0.12);  color: var(--warning); }
+.badge-red    { background: rgba(255,71,87,0.12);  color: var(--danger); }
+.badge-blue   { background: rgba(30,144,255,0.12); color: var(--info); }
+.badge-gray   { background: var(--surface3); color: var(--text-muted); }
+
+/* =========================================================
+   FORMS
+   Next.js: components/ui/Input.tsx, Select.tsx, Textarea.tsx
+   ========================================================= */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+.form-full { grid-column: 1 / -1; }
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.form-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 0.88rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.form-input::placeholder { color: var(--text-dim); }
+select.form-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237c7c8f' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+textarea.form-input { resize: vertical; min-height: 80px; }
+
+/* =========================================================
+   MODAL
+   Next.js: components/ui/Modal.tsx
+   ========================================================= */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.15s ease;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+  animation: slideUp 0.2s ease;
+}
+.modal-lg { max-width: 800px; }
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.modal-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+}
+.modal-close {
+  background: none;
+  color: var(--text-dim);
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.modal-close:hover { color: var(--text); background: var(--surface3); }
+.modal-body { padding: 24px; }
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* =========================================================
+   TOAST
+   Next.js: components/ui/Toast.tsx (react-hot-toast wrapper)
+   ========================================================= */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: var(--surface2);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  color: var(--text);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 280px;
+  animation: slideIn 0.25s ease;
+}
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+.toast-icon { font-size: 1rem; }
+.toast-success .toast-icon::before { content: '✓'; color: var(--success); }
+.toast-error   .toast-icon::before { content: '✕'; color: var(--danger); }
+
+/* =========================================================
+   EMPTY STATE
+   Next.js: components/ui/EmptyState.tsx
+   ========================================================= */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-dim);
+}
+.empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 14px;
+  display: block;
+  opacity: 0.4;
+}
+.empty-state h3 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.empty-state p { font-family: var(--font-body); font-size: 0.84rem; }
+
+/* =========================================================
+   PRODUCT CARD — Ürünlerim
+   Next.js: components/product/ProductCard.tsx
+   ========================================================= */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+.product-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.product-card:hover {
+  border-color: var(--border-light);
+  transform: translateY(-2px);
+}
+.product-img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  background: var(--surface3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  font-size: 2rem;
+}
+.product-img img { width: 100%; height: 100%; object-fit: cover; }
+.product-info { padding: 14px; }
+.product-name {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.product-desc {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.product-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.product-price {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* =========================================================
+   WİZARD ARAMA + LİSTE
+   Next.js: components/teklif/WizardMusteri.tsx, WizardUrun.tsx
+   ========================================================= */
+.wiz-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+
+/* Müşteri / Ürün liste satırları */
+.wiz-list { max-height: 340px; overflow-y: auto; }
+
+.wiz-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.12s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.wiz-item:last-child { border-bottom: none; }
+.wiz-item:hover { background: var(--surface2); }
+.wiz-item.selected {
+  background: var(--accent-glow);
+}
+.wiz-item.selected::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Avatar daire */
+.wiz-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  transition: background 0.12s, color 0.12s;
+}
+.wiz-item.selected .wiz-avatar {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+/* Ürün küçük görsel */
+.wiz-urun-img {
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--surface3);
+}
+.wiz-urun-img-placeholder {
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.wiz-item-main { flex: 1; min-width: 0; }
+.wiz-item-title {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wiz-item-sub {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wiz-item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.wiz-item-price {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.wiz-check-icon {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border-light);
+  background: var(--surface3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem;
+  color: transparent;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.wiz-item.selected .wiz-check-icon {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.wiz-item.selected .wiz-check-icon::after { content: '✓'; font-weight: 700; }
+
+/* Seçili müşteri bandı */
+.wiz-selected-band {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--accent-glow);
+  border-bottom: 1px solid rgba(var(--accent-rgb),.2);
+}
+.wiz-selected-band-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--accent);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.wiz-selected-band-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+  flex: 1;
+}
+.wiz-selected-band-clear {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.12s, background 0.12s;
+  flex-shrink: 0;
+}
+.wiz-selected-band-clear:hover { color: var(--danger); background: rgba(224,49,49,.08); }
+
+/* Highlight eşleşen metin */
+.hl { background: var(--accent-glow); color: var(--accent); border-radius: 2px; font-weight: 700; }
+   Next.js: components/teklif/TeklifWizard.tsx
+   ========================================================= */
+.wizard-steps {
+  display: flex;
+  gap: 0;
+  margin-bottom: 28px;
+}
+.wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  border-bottom: 2px solid var(--border);
+  flex: 1;
+  transition: all 0.2s;
+}
+.wizard-step.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.wizard-step.done {
+  color: var(--success);
+  border-bottom-color: var(--success);
+}
+.step-num {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--surface3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.wizard-step.active .step-num { background: var(--accent); color: #fff; }
+.wizard-step.done .step-num { background: var(--success); color: #fff; }
+
+.wizard-panel { display: none; }
+.wizard-panel.active { display: block; animation: fadeIn 0.2s ease; }
+
+/* Kalemler tablosu */
+.kalem-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+.kalem-table th {
+  padding: 8px 10px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: left;
+}
+.kalem-table td { padding: 8px 10px; border-top: 1px solid var(--border); }
+.kalem-input {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-size: 0.84rem;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+.kalem-input:focus { border-color: var(--accent); }
+
+/* =========================================================
+   PROFORMA ÖNIZLEME
+   Next.js: components/teklif/ProformaPreview.tsx
+   Dikkat: Bu bölüm window.print() ile PDF olarak basılır.
+   ========================================================= */
+.proforma-preview {
+  background: white;
+  color: #1a1a2e;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  font-family: var(--font-body);
+  border: 1px solid var(--border);
+  max-width: 820px;
+  margin: 0 auto;
+}
+.proforma-header {
+  background: #ffffff;
+  color: #1a1a2e;
+  padding: 32px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #1a1a2e;
+}
+.proforma-firma-ad {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #1a1a2e;
+}
+.proforma-firma-ad span { color: #059669; }
+.proforma-firma-info { font-size: 0.78rem; color: #555; margin-top: 6px; line-height: 1.8; }
+.proforma-meta { text-align: right; }
+.proforma-meta .label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #888;
+  margin-bottom: 4px;
+}
+.proforma-meta .teklif-no {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #059669;
+}
+.proforma-meta .tarih { font-size: 0.82rem; color: #555; margin-top: 4px; }
+
+.proforma-body { padding: 32px 40px; }
+.proforma-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.proforma-section-title {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #999;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+.proforma-musteri-ad { font-weight: 700; font-size: 0.95rem; color: #1a1a2e; }
+.proforma-musteri-detail { font-size: 0.82rem; color: #666; line-height: 1.8; }
+
+.proforma-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.85rem; }
+.proforma-table th {
+  background: #f5f5f8;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #666;
+}
+.proforma-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f0f0f4;
+  color: #333;
+  vertical-align: middle;
+}
+.proforma-table td:first-child { font-weight: 600; color: #1a1a2e; }
+.proforma-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.proforma-totals {
+  margin-left: auto;
+  width: 280px;
+  margin-top: 8px;
+}
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 0;
+  font-size: 0.85rem;
+  color: #555;
+  border-bottom: 1px solid #f0f0f4;
+}
+.total-row.grand {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  border-bottom: none;
+  border-top: 2px solid #1a1a2e;
+  margin-top: 4px;
+  padding-top: 10px;
+}
+.total-row.kur-row {
+  font-size: 0.78rem;
+  color: #888;
+  font-style: italic;
+}
+.proforma-not {
+  background: #f9f9fc;
+  border-left: 3px solid #059669;
+  border-radius: 0 6px 6px 0;
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  color: #555;
+  margin-top: 20px;
+  line-height: 1.7;
+}
+.proforma-footer {
+  background: #f5f5f8;
+  padding: 14px 40px;
+  font-size: 0.75rem;
+  color: #999;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-top: 1px solid #e8e8f0;
+}
+/* Ürün görseli proformada */
+.proforma-urun-img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #eee;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+/* =========================================================
+   FİRMA BİLGİLERİ
+   ========================================================= */
+.firma-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* =========================================================
+   SEARCH BAR
+   ========================================================= */
+.search-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.search-wrap { position: relative; flex: 1; max-width: 380px; }
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  pointer-events: none;
+}
+.search-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 9px 14px 9px 36px;
+  color: var(--text);
+  font-size: 0.88rem;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  outline: none;
+}
+.search-input::placeholder { color: var(--text-dim); }
+.search-count {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   PRINT STYLES — PDF çıktısı için
+   Next.js: /app/api/pdf/[id]/route.ts → Puppeteer ile server-side
+   ========================================================= */
+@media print {
+  /* ── Renk doğruluğu ── */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* ── Tüm UI'yı gizle: hiçbir şey yer kaplamasın ── */
+  body > *:not(#print-root) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* ── Baskı kökü: normal akış (çok sayfa için fixed DEĞİL) ── */
+  #print-root {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;   /* fixed çok-sayfada içeriği keser; static akışa bırakır */
+    z-index: 99999 !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  /* print-root içindeki her şey görünür olsun */
+  #print-root, #print-root * {
+    visibility: visible !important;
+  }
+
+  /* ── Proforma: sınır, yuvarlak köşe kaldır ── */
+  .proforma-preview {
+    border: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* ── Sayfa ayarı: A4, üst/alt küçük margin (içerik kenara yapışmasın) ── */
+  @page {
+    size: A4 portrait;
+    margin: 12mm 0;
+  }
+
+  /* ── İçerik sayfa kırılmaları ── */
+  .proforma-header  { page-break-inside: avoid; break-inside: avoid; }
+  .proforma-2col    { page-break-inside: avoid; break-inside: avoid; }
+
+  /* Tablo: uzun listeler sayfalara bölünebilir */
+  .proforma-table   { page-break-inside: auto; break-inside: auto; }
+  /* Başlık HER sayfada tekrar etsin */
+  .proforma-table thead { display: table-header-group; }
+  .proforma-table tfoot { display: table-row-group; }
+  /* Bir satır asla ikiye bölünmesin */
+  .proforma-table tr { page-break-inside: avoid; break-inside: avoid; }
+  .proforma-table td, .proforma-table th { page-break-inside: avoid; break-inside: avoid; }
+  /* Satır içi ürün görseli sabit boyutlu kalsın */
+  .proforma-urun-img { max-height: 40px !important; }
+
+  /* Toplam kutusu ortadan bölünmesin, mümkünse üstteki içerikle kalsın */
+  .proforma-totals  { page-break-inside: avoid; break-inside: avoid; }
+  /* Not ve footer bütün kalsın */
+  .proforma-not     { page-break-inside: avoid; break-inside: avoid; }
+  .proforma-footer  { page-break-inside: avoid; break-inside: avoid; }
+}
+
+/* Print root — sadece baskıda görünür, ekranda gizli */
+#print-root { display: none; }
+
+/* =========================================================
+   MOBİL HAMBURGER BUTONU
+   Next.js: components/layout/MobileMenuButton.tsx
+   ========================================================= */
+.mobile-menu-btn {
+  display: none;
+  width: 40px; height: 40px;
+  border-radius: var(--radius);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobile-menu-btn:hover { background: var(--surface3); }
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 18px;
+}
+.hamburger span {
+  display: block;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: all 0.25s ease;
+  transform-origin: center;
+}
+.sidebar-open .hamburger span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.sidebar-open .hamburger span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+/* Sidebar overlay — mobilde sidebar arkasını karartır */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 90;
+  backdrop-filter: blur(2px);
+}
+.sidebar-open .sidebar-overlay { display: block; }
+
+/* =========================================================
+   BOTTOM NAV — Mobil alt navigasyon (≤640px)
+   Next.js: components/layout/BottomNav.tsx
+   ========================================================= */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  z-index: 200;
+  padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+  box-shadow: 0 -2px 12px rgba(0,0,0,.07);
+}
+.bottom-nav-inner {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+.bn-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text-dim);
+  -webkit-tap-highlight-color: transparent;
+  min-width: 52px;
+  transition: color 0.15s;
+}
+.bn-item.active { color: var(--accent); }
+.bn-item svg { width: 22px; height: 22px; flex-shrink: 0; }
+.bn-label { font-size: 0.6rem; font-weight: 500; white-space: nowrap; }
+
+/* =========================================================
+   RESPONSIVE BREAKPOINTS
+   Next.js: tailwind sm/md/lg breakpoints ile değiştirilecek
+   ========================================================= */
+
+/* ── Tablet (≤900px) ── */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 200px; }
+  .content { padding: 20px; }
+  .topbar { padding: 0 20px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .proforma-body { padding: 24px; }
+  .proforma-header { padding: 24px; }
+  .firma-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Büyük mobil (≤768px) ── */
+@media (max-width: 768px) {
+  .mobile-menu-btn { display: flex; }
+
+  /* Sidebar mobilde drawer olur */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(.4,0,.2,1);
+    box-shadow: none;
+    width: 260px !important;
+  }
+  .sidebar-open .sidebar { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,.12); }
+
+  .main-area { width: 100%; }
+  .content { padding: 16px; }
+  .topbar { padding: 0 16px; gap: 10px; }
+  .topbar-sub { display: none; }
+
+  /* Tablolar: yatay kaydırma, hücre padding küçült */
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+  thead th { padding: 9px 12px; font-size: 0.68rem; }
+  tbody td { padding: 10px 12px; font-size: 0.82rem; }
+
+  /* Form: tek kolon */
+  .form-grid { grid-template-columns: 1fr; }
+  .form-full { grid-column: 1; }
+
+  /* Modal: alt sheet gibi aç */
+  .modal-overlay { align-items: flex-end; }
+  .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    max-height: 92vh;
+    animation: sheetUp 0.28s cubic-bezier(.4,0,.2,1);
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+  @keyframes sheetUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+
+  /* Stat grid 2 kolon */
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-value { font-size: 1.6rem; }
+  .stat-card { padding: 14px; }
+
+  /* Card padding küçült */
+  .card { padding: 14px; }
+  .card-header { margin-bottom: 12px; }
+
+  /* Ürün grid 2 kolon */
+  .product-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .product-img { height: 110px; }
+
+  /* Wizard steps: sadece numara göster */
+  .wizard-step { padding: 8px 10px; font-size: 0; gap: 0; justify-content: center; }
+  .wizard-step .step-num { margin: 0; font-size: 0.72rem; }
+  .step-label { display: none; }
+
+  /* Kalem tablosu mobil uyumu */
+  .kalem-table th, .kalem-table td { padding: 6px 8px; font-size: 0.78rem; }
+  .kalem-input { padding: 5px 7px; font-size: 0.78rem; }
+
+  /* Proforma önizleme */
+  .proforma-header { flex-direction: column; gap: 16px; padding: 20px; }
+  .proforma-meta { text-align: left; }
+  .proforma-body { padding: 16px; }
+  .proforma-2col { grid-template-columns: 1fr; gap: 14px; }
+  .proforma-totals { width: 100%; }
+  .proforma-footer { flex-direction: column; gap: 4px; padding: 14px 16px; }
+
+  /* Firma layout tek kolon */
+  .firma-layout { grid-template-columns: 1fr; }
+
+  /* Toast mobil: alta tam genişlik */
+  .toast-container { right: 12px; left: 12px; bottom: 80px; }
+  .toast { min-width: unset; }
+
+  /* Tasarım sayfası */
+  .font-chip { width: 120px; }
+  .color-row, .font-row { padding-bottom: 6px; }
+
+  /* Wizard nav butonları */
+  .wizard-nav-btns { flex-direction: row; }
+
+  /* Content alt boşluk (bottom nav için) */
+  .content { padding-bottom: 80px; }
+}
+
+/* ── Küçük mobil (≤480px) ── */
+@media (max-width: 480px) {
+  html { font-size: 14px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-value { font-size: 1.4rem; }
+  .product-grid { grid-template-columns: 1fr; }
+  .topbar-title { font-size: 0.92rem; }
+
+  /* Tablo: kritik olmayan sütunları gizle */
+  .hide-mobile { display: none !important; }
+
+  /* Butonlar tam genişlik (page header hariç) */
+  .modal-footer { flex-direction: column-reverse; gap: 8px; }
+  .modal-footer .btn { width: 100%; justify-content: center; }
+
+  /* Proforma: font küçült */
+  .proforma-firma-ad { font-size: 1.2rem; }
+  .proforma-meta .teklif-no { font-size: 1.1rem; }
+}
+
+/* ── iOS zoom önleme: input focus'ta zoom yapar, 16px bunu engeller ── */
+@media (max-width: 768px) {
+  .form-input, .kalem-input, .search-input {
+    font-size: 16px !important;
+  }
+}
+
+/* ── Bottom nav sadece ≤640px göster ── */
+@media (max-width: 640px) {
+  .bottom-nav { display: block; }
+  /* Sidebar footer gizle mobilde */
+  .sidebar-footer { display: none; }
+}
+
+/* =========================================================
+   MISC UTILITIES
+   ========================================================= */
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.mb-4 { margin-bottom: 16px; }
+.mb-6 { margin-bottom: 24px; }
+.mt-4 { margin-top: 16px; }
+.text-muted { color: var(--text-muted); font-size: 0.84rem; }
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+/* Ürün seçiminde miktar */
+.qty-input {
+  width: 64px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 8px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: center;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -moz-appearance: textfield;
+}
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.qty-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  outline: none;
+}
+
+/* Para birimi seçici */
+.currency-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.currency-tab {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.currency-tab.active {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+/* "+ Özel" ekleme sekmesi */
+.currency-tab-add {
+  border-style: dashed !important;
+  font-weight: 700;
+  opacity: 0.85;
+}
+.currency-tab-add:hover {
+  opacity: 1;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Satıcı firma kartları */
+.firma-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.firma-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  background: var(--surface2);
+  transition: border-color .15s, box-shadow .15s;
+}
+.firma-card:hover { border-color: var(--accent); }
+.firma-card-default {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.firma-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.firma-card-ad {
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--text);
+  font-family: var(--font-display);
+}
+.firma-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 20px;
+  background: var(--accent-glow);
+  color: var(--accent);
+  vertical-align: middle;
+}
+.firma-card-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.firma-card-info {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+/* KDV kutusu — kalemler başlığında, para birimi sekmeleri yanında */
+.wiz-kdv-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.wiz-kdv-input {
+  width: 64px;
+  padding: 5px 8px;
+  font-size: 0.82rem;
+  text-align: center;
+}
+/* KDV kutusu ile sekmelerin dikey hizası aynı olsun */
+.card-header .currency-tabs { margin-bottom: 0; }
+.card-header .wiz-kdv-box { margin-bottom: 0; }
+
+/* Kur kutusu — kalemler kartında, sekmelerin altında */
+.wiz-kur-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px 0;
+  padding: 10px 12px;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+.wiz-kur-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.wiz-kur-input {
+  width: 110px;
+  padding: 5px 8px;
+  font-size: 0.85rem;
+  text-align: right;
+}
+.wiz-kur-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* =========================================================
+   DASHBOARD FİLTRE BARI
+   ========================================================= */
+.db-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.db-filter-select {
+  appearance: none;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 28px 8px 10px;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%239999b0' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  min-width: 100px;
+}
+.db-filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.db-filter-select.active {
+  border-color: var(--accent);
+  background-color: var(--accent-glow);
+  color: var(--accent);
+  font-weight: 500;
+}
+.db-reset-btn {
+  width: 34px; height: 34px;
+  border-radius: var(--radius);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.db-reset-btn:hover {
+  background: var(--surface3);
+  color: var(--text);
+  border-color: var(--border-light);
+}
+.db-reset-btn.has-filter {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.db-reset-btn.has-filter svg {
+  animation: spin-once 0.4s ease;
+}
+@keyframes spin-once {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+.db-result-bar {
+  padding: 6px 16px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+}
+.db-result-bar::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .db-filter-bar { width: 100%; margin-left: 0; }
+  .db-filter-select { min-width: 80px; font-size: 0.78rem; }
+  .db-filter-bar .search-wrap { max-width: 100% !important; }
+}
+
+/* =========================================================
+   TOPLU ÜRÜN EKLE MODAL
+   Next.js: components/urun/TopluEkleModal.tsx
+   ========================================================= */
+.toplu-step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.toplu-step-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.toplu-step-body { flex: 1; }
+.toplu-step-title {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.toplu-step-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+.toplu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 16px 0;
+}
+.toplu-kolon-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.toplu-kolon {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+.toplu-dropzone {
+  margin-top: 10px;
+  border: 2px dashed var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--surface2);
+}
+.toplu-dropzone:hover, .toplu-dropzone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+.toplu-drop-icon { font-size: 1.8rem; margin-bottom: 8px; }
+.toplu-drop-text { font-size: 0.85rem; font-weight: 500; color: var(--text-muted); }
+.toplu-drop-sub { font-size: 0.72rem; color: var(--text-dim); margin-top: 4px; }
+.toplu-hata {
+  background: rgba(224,49,49,.08);
+  border: 1px solid rgba(224,49,49,.2);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  color: var(--danger);
+}
+
+/* =========================================================
+   GÖRSEL LİGHTBOX
+   Next.js: components/ui/Lightbox.tsx
+   ========================================================= */
+.lightbox-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+  padding: 20px;
+  -webkit-tap-highlight-color: transparent;
+}
+.lightbox-overlay.open { display: flex; }
+.lightbox-inner {
+  position: relative;
+  max-width: min(90vw, 900px);
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lightbox-inner img {
+  max-width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 60px rgba(0,0,0,0.6);
+  display: block;
+}
+.lightbox-close {
+  position: fixed;
+  top: 16px; right: 16px;
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+  backdrop-filter: blur(8px);
+  z-index: 2001;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.22); transform: scale(1.1); }
+.lightbox-caption {
+  position: fixed;
+  bottom: 20px; left: 0; right: 0;
+  text-align: center;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+/* Ürün görseli tıklanabilir imleci */
+.product-img-clickable {
+  cursor: zoom-in;
+  position: relative;
+  overflow: hidden;
+}
+.product-img-clickable::after {
+  content: '⤢';
+  position: absolute;
+  bottom: 6px; right: 8px;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.product-img-clickable:hover::after { opacity: 1; }
+
+/* =========================================================
+   TASARIM 2li GRID — renk ve font
+   ========================================================= */
+.color-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.font-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+/* Önizleme artık altta, tam genişlik */
+.tasarim-layout-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.tasarim-top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 640px) {
+  .tasarim-top-row { grid-template-columns: 1fr; }
+  .color-grid-2 { grid-template-columns: repeat(3, 1fr); }
+  .font-grid-2 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Renk chip 2li grid versiyonu */
+.color-chip-2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.color-chip-2:hover { border-color: var(--border-light); background: var(--surface); }
+.color-chip-2.active { border-color: var(--accent); background: var(--accent-glow); }
+.color-chip-2-dot {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,.15);
+  position: relative;
+}
+.color-chip-2.active .color-chip-2-dot::after {
+  content: '✓';
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+.color-chip-2-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.color-chip-2.active .color-chip-2-label { color: var(--accent); font-weight: 600; }
+
+/* Font chip 2li grid versiyonu */
+.font-chip-2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  transition: all 0.15s;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+.font-chip-2:hover { border-color: var(--border-light); background: var(--surface); }
+.font-chip-2.active { border-color: var(--accent); background: var(--accent-glow); }
+.font-chip-2-preview {
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+  flex-shrink: 0;
+  width: 36px;
+  text-align: center;
+}
+.font-chip-2-info { flex: 1; min-width: 0; }
+.font-chip-2-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.font-chip-2-sub {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 1px;
+}
+.font-chip-2-radio {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border-light);
+  flex-shrink: 0;
+  background: var(--surface3);
+  transition: all 0.15s;
+}
+.font-chip-2.active .font-chip-2-radio {
+  background: var(--accent);
+  border-color: var(--accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6l3 3 5-5' stroke='white' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Önizleme tam genişlik alt panel */
+.tasarim-preview-full {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.tasarim-preview-full-header {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 9px 16px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tasarim-preview-full-header::before {
+  content: '';
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  transition: background 0.3s;
+}
+.tasarim-preview-full-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+}
+.prev-col {
+  padding: 16px 18px;
+  border-right: 1px solid var(--border);
+}
+.prev-col:last-child { border-right: none; }
+.prev-col-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .tasarim-preview-full-body { grid-template-columns: 1fr; }
+  .prev-col { border-right: none; border-bottom: 1px solid var(--border); }
+  .prev-col:last-child { border-bottom: none; }
+}
+   Tek satır yatay kaydırmalı seçiciler, sticky önizleme
+   ========================================================= */
+
+/* Sayfa ana düzeni */
+.tasarim-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+  align-items: start;
+}
+
+/* Sol panel */
+.tasarim-left { display: flex; flex-direction: column; gap: 14px; }
+
+/* Bölüm başlığı */
+.tasarim-section-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* ── RENK SATIRI — yatay kaydırmalı ── */
+.color-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.color-row::-webkit-scrollbar { display: none; }
+
+.color-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 2px solid transparent;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.color-chip:hover { background: var(--surface2); }
+.color-chip.active { border-color: var(--accent); background: var(--accent-glow); }
+.color-chip-dot {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  position: relative;
+  flex-shrink: 0;
+}
+.color-chip.active .color-chip-dot::after {
+  content: '✓';
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+.color-chip-label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── FONT SATIRI — yatay kaydırmalı ── */
+.font-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.font-row::-webkit-scrollbar { display: none; }
+
+.font-chip {
+  flex-shrink: 0;
+  width: 150px;
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+.font-chip:hover { border-color: var(--border-light); background: var(--surface); }
+.font-chip.active { border-color: var(--accent); background: var(--accent-glow); }
+
+.font-chip-radio {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border-light);
+  background: var(--surface3);
+  transition: all 0.15s;
+}
+.font-chip.active .font-chip-radio {
+  background: var(--accent);
+  border-color: var(--accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6l3 3 5-5' stroke='white' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.font-chip-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 3px;
+  color: var(--text);
+}
+.font-chip-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.font-chip-name {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+/* ── CANLI ÖNİZLEME ── */
+.tasarim-preview-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: sticky;
+  top: 8px;
+}
+.tasarim-preview-header {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tasarim-preview-header::before {
+  content: '';
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.tasarim-preview-body { padding: 18px; }
+
+.prev2-mockbar {
+  background: var(--surface2);
+  border-radius: 6px;
+  padding: 7px 10px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+}
+.prev2-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  transition: background 0.3s;
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.prev2-logo {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text);
+  transition: font-family 0.2s;
+}
+
+.prev2-heading {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 5px;
+  transition: font-family 0.2s;
+}
+.prev2-body {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 14px;
+  transition: font-family 0.2s;
+}
+.prev2-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.prev2-btn {
+  background: var(--accent);
+  color: white;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 7px 13px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: default;
+  transition: background 0.3s;
+  white-space: nowrap;
+}
+.prev2-badge {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid rgba(var(--accent-rgb),.25);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+  transition: all 0.3s;
+}
+.prev2-divider { height: 1px; background: var(--border); margin: 12px 0; }
+.prev2-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.prev2-meta-dot {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.prev2-meta-text {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.prev2-meta-color { font-weight: 600; color: var(--text-muted); }
+
+/* Mobilde önizleme alta düşer */
+@media (max-width: 900px) {
+  .tasarim-layout { grid-template-columns: 1fr; }
+  .tasarim-preview-card { position: static; }
+}
+@media (max-width: 640px) {
+  .font-chip { width: 130px; padding: 10px 12px; }
+  .font-chip-title { font-size: 1.1rem; }
+}

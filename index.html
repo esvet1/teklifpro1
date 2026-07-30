@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiyat Teklifi Aracı</title>
+
+<!-- 
+  ============================================================
+  FİYAT TEKLİFİ ARACI — Tek Parça HTML Prototipi
+  ============================================================
+  Next.js Bileşen Mimarisi için Notlar:
+  
+  SAYFALAR / ROUTE'LAR:
+  - /dashboard          → Ana ekran (stats kartları)
+  - /teklif/yeni        → TeklifOlustur component
+  - /teklif/[id]        → TeklifDetay component
+  - /musteri            → MusteriListesi + MusteriForm
+  - /urun               → UrunListesi + UrunForm
+  - /teklifler          → TeklifListesi
+  - /firma              → FirmaBilgileri
+  
+  STATE YÖNETİMİ:
+  - Zustand veya React Context tercih edilebilir
+  - localStorage → API (Prisma/Supabase) ile değiştirilecek
+  - store/musteri.ts, store/urun.ts, store/teklif.ts
+  
+  SHARED COMPONENT'LAR:
+  - components/ui/Modal.tsx
+  - components/ui/Toast.tsx
+  - components/ui/Badge.tsx
+  - components/ui/EmptyState.tsx
+  - components/layout/Sidebar.tsx
+  - components/layout/TopBar.tsx
+  
+  PDF:
+  - Tarayıcı print() → jsPDF + html2canvas veya Puppeteer (server-side)
+  - /api/pdf/[teklifId] → PDF stream endpoint
+  
+  VERI MODELLERİ (Prisma şeması için):
+  - Musteri { id, tip, ad, sirket, email, tel, adres, ulke, vergiNo, createdAt }
+  - Urun { id, ad, aciklama, birim, fiyat, para_birimi, gorselUrl, stokKodu, createdAt }
+  - Teklif { id, teklifNo, musteriId, gecerlilikTarihi, not, durum, kalemler[], createdAt }
+  - TeklifKalem { id, teklifId, urunId, miktar, birimFiyat, iskonto, kdv }
+  - FirmaBilgi { id, ad, adres, tel, email, web, vergiNo, logo, banka, iban }
+  ============================================================
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- 
+  FONT STACK — Next.js: next/font/google ile import edilecek
+  Her tema çifti: display (başlıklar) + body (içerik)
+  1. Syne + DM Sans      → Modern / Geometrik
+  2. Playfair Display + Lato  → Klasik / Kurumsal
+  3. Space Grotesk + Inter    → Teknik / Minimal
+  4. Fraunces + Nunito        → Organik / Samimi
+  5. Bebas Neue + Barlow      → Güçlü / Bold
+-->
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&family=Playfair+Display:wght@400;500;600;700;800&family=Lato:wght@300;400;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Nunito:wght@300;400;500;600;700&family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- =========================================================
+     UYGULAMA KABUĞU
+     Next.js: app/layout.tsx → AppShell component
+     ========================================================= -->
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">teklif<span>.</span>pro</div>
+      <div class="tagline">Proforma Fiyat Teklifi</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="navigate('dashboard')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Gösterge Paneli
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-item" onclick="navigate('teklif-olustur')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Teklif Oluştur
+      </div>
+      <div class="nav-item" onclick="navigate('tekliflerim')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Fiyat Tekliflerim
+        <span class="nav-badge" id="badge-teklif">0</span>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-item" onclick="navigate('musterilerim')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Müşterilerim
+        <span class="nav-badge" id="badge-musteri">0</span>
+      </div>
+      <div class="nav-item" onclick="navigate('urunlerim')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Ürünlerim
+        <span class="nav-badge" id="badge-urun">0</span>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-item" onclick="navigate('firma-bilgilerim')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Firma Bilgilerim
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-item" onclick="navigate('tasarim-ayarlari')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        Tasarım Ayarları
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">v1.0 · localStorage</div>
+  </aside>
+
+  <!-- Sidebar overlay (mobil) -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- MAIN AREA -->
+  <div class="main-area">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <button class="mobile-menu-btn" id="hamburger-btn" onclick="toggleSidebar()" aria-label="Menü">
+        <div class="hamburger">
+          <span></span><span></span><span></span>
+        </div>
+      </button>
+      <div>
+        <div class="topbar-title" id="topbar-title">Gösterge Paneli</div>
+        <div class="topbar-sub" id="topbar-sub">Genel bakış</div>
+      </div>
+      <div class="topbar-actions" id="topbar-actions"></div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- ===================================================
+           DASHBOARD
+           Next.js: app/(dashboard)/page.tsx
+           =================================================== -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Toplam Teklif</div>
+            <div class="stat-value" id="stat-teklif">0</div>
+            <div class="stat-sub">Tüm zamanlar</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Müşteriler</div>
+            <div class="stat-value" id="stat-musteri">0</div>
+            <div class="stat-sub">Kayıtlı müşteri</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Ürünler</div>
+            <div class="stat-value" id="stat-urun">0</div>
+            <div class="stat-sub">Katalogdaki ürün</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Bu Ay</div>
+            <div class="stat-value" id="stat-ay">0</div>
+            <div class="stat-sub">Teklif oluşturuldu</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header" style="flex-wrap:wrap;gap:10px;align-items:center">
+            <span class="card-title" style="flex-shrink:0">Son Teklifler</span>
+            <div class="db-filter-bar">
+              <div class="search-wrap" style="flex:1;min-width:130px;max-width:200px">
+                <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="search-input" id="db-search" type="text" placeholder="No / müşteri…" oninput="renderDashboard()" style="width:100%">
+              </div>
+              <select class="db-filter-select" id="db-yil" onchange="renderDashboard()">
+                <option value="">Tüm Yıllar</option>
+              </select>
+              <select class="db-filter-select" id="db-ay" onchange="renderDashboard()">
+                <option value="">Tüm Aylar</option>
+                <option value="1">Ocak</option><option value="2">Şubat</option>
+                <option value="3">Mart</option><option value="4">Nisan</option>
+                <option value="5">Mayıs</option><option value="6">Haziran</option>
+                <option value="7">Temmuz</option><option value="8">Ağustos</option>
+                <option value="9">Eylül</option><option value="10">Ekim</option>
+                <option value="11">Kasım</option><option value="12">Aralık</option>
+              </select>
+              <button class="db-reset-btn" id="db-reset-btn" onclick="resetDashboardFilter()" title="Filtreleri sıfırla">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('tekliflerim')" style="white-space:nowrap;flex-shrink:0">Tümünü Gör</button>
+            </div>
+          </div>
+          <div class="db-result-bar" id="db-result-bar" style="display:none">
+            <span id="db-result-text"></span>
+          </div>
+          <div class="table-wrap" id="dashboard-recent">
+            <div class="empty-state">
+              <span class="empty-icon">📄</span>
+              <h3>Henüz teklif yok</h3>
+              <p>Yeni bir teklif oluşturmak için soldaki menüyü kullanın.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================
+           TEKLİF OLUŞTUR — Wizard
+           Next.js: app/(dashboard)/teklif/yeni/page.tsx
+           =================================================== -->
+      <div class="page" id="page-teklif-olustur">
+
+        <div class="wizard-steps">
+          <div class="wizard-step active" id="step-tab-1">
+            <div class="step-num">1</div> Müşteri Seç
+          </div>
+          <div class="wizard-step" id="step-tab-2">
+            <div class="step-num">2</div> Ürün Ekle
+          </div>
+          <div class="wizard-step" id="step-tab-3">
+            <div class="step-num">3</div> Detaylar & Kaydet
+          </div>
+        </div>
+
+        <!-- Step 1: Müşteri Seç -->
+        <div class="wizard-panel active" id="wizard-step-1">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Satıcı Firma</span>
+              <button class="btn btn-ghost btn-sm" onclick="openFirmaModal()">+ Yeni Firma</button>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Teklifi hangi firmadan veriyorsunuz?</label>
+              <select class="form-input" id="w-satici-firma" onchange="onSaticiFirmaChange()"></select>
+            </div>
+          </div>
+          <div class="card mt-4">
+            <div class="card-header">
+              <span class="card-title">Müşteri Seçin</span>
+              <button class="btn btn-ghost btn-sm" onclick="openMusteriModal()">+ Yeni Müşteri</button>
+            </div>
+
+            <!-- Seçili müşteri bandı -->
+            <div id="w-secili-musteri" style="display:none"></div>
+
+            <!-- Arama -->
+            <div class="wiz-search-bar">
+              <div class="search-wrap" style="flex:1">
+                <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="search-input" id="w-musteri-search" type="text"
+                  placeholder="İsim, şirket veya e-posta ile ara…"
+                  oninput="renderMusteriSelectGrid()"
+                  autocomplete="off"
+                  style="width:100%">
+              </div>
+              <span class="search-count" id="w-musteri-count"></span>
+            </div>
+
+            <!-- Müşteri listesi -->
+            <div id="musteri-select-grid">
+              <div class="empty-state" style="padding:30px">
+                <span class="empty-icon">👥</span>
+                <p>Müşteri bulunamadı. Önce müşteri ekleyin.</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-between mt-4">
+            <div></div>
+            <button class="btn btn-primary" onclick="wizardNext(2)">Devam Et →</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Ürün Ekle -->
+        <div class="wizard-panel" id="wizard-step-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Ürün Seçin</span>
+              <button class="btn btn-ghost btn-sm" onclick="openUrunModal()">+ Yeni Ürün</button>
+            </div>
+
+            <!-- Arama -->
+            <div class="wiz-search-bar">
+              <div class="search-wrap" style="flex:1">
+                <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="search-input" id="w-urun-search" type="text"
+                  placeholder="Ürün adı veya stok kodu ile ara…"
+                  oninput="renderUrunSelectGrid()"
+                  autocomplete="off"
+                  style="width:100%">
+              </div>
+              <span class="search-count" id="w-urun-count"></span>
+            </div>
+
+            <!-- Ürün listesi -->
+            <div id="urun-select-grid"></div>
+          </div>
+          <div class="card mt-4">
+            <div class="card-header">
+              <span class="card-title">Seçilen Kalemler</span>
+              <div class="flex items-center gap-3">
+                <div class="wiz-kdv-box">
+                  <label class="form-label" style="margin:0;white-space:nowrap">KDV %</label>
+                  <input type="number" class="form-input wiz-kdv-input" id="w-kdv" value="20" min="0" max="100"
+                    oninput="onKdvChange()">
+                </div>
+                <div class="currency-tabs" id="w-currency-tabs">
+                  <!-- Dinamik: renderCurrencyTabs() doldurur -->
+                </div>
+              </div>
+            </div>
+            <!-- Kur kutusu: kaynak ≠ teklif para birimi olunca görünür -->
+            <div id="w-kur-box" class="wiz-kur-box" style="display:none">
+              <span class="wiz-kur-label" id="w-kur-label">Kur:</span>
+              <input type="number" class="form-input wiz-kur-input" id="w-kur"
+                value="1" min="0" step="0.0001" oninput="onKurChange()">
+              <span class="wiz-kur-hint" id="w-kur-hint"></span>
+            </div>
+            <div id="kalemler-wrap">
+              <div class="text-muted" style="text-align:center;padding:20px">Ürün seçin, kalemler burada görünür.</div>
+            </div>
+          </div>
+          <div class="flex justify-between mt-4">
+            <button class="btn btn-ghost" onclick="wizardNext(1)">← Geri</button>
+            <button class="btn btn-primary" onclick="wizardNext(3)">Devam Et →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Detaylar & Kaydet -->
+        <div class="wizard-panel" id="wizard-step-3">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Teklif Detayları</span>
+            </div>
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="form-label">Geçerlilik Tarihi</label>
+                <input type="date" class="form-input" id="w-gecerlilik">
+              </div>
+              <div class="form-field form-full">
+                <label class="form-label">Teklif Notu (isteğe bağlı)</label>
+                <textarea class="form-input" id="w-not" placeholder="Müşteriye özel not, teslimat koşulları, ödeme vadesi vb."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Özet -->
+          <div class="card mt-4">
+            <div class="card-header"><span class="card-title">Özet</span></div>
+            <div id="wizard-ozet"></div>
+          </div>
+
+          <div class="flex justify-between mt-4">
+            <button class="btn btn-ghost" onclick="wizardNext(2)">← Geri</button>
+            <button class="btn btn-primary" id="wizard-kaydet-btn" onclick="kaydetTeklif()">✓ Proforma Oluştur & Kaydet</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================
+           FİYAT TEKLİFLERİM
+           Next.js: app/(dashboard)/teklifler/page.tsx
+           =================================================== -->
+      <div class="page" id="page-tekliflerim">
+        <div class="search-bar-wrap">
+          <div class="search-wrap">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" id="search-teklif" type="text" placeholder="Teklif no veya müşteri ara…" oninput="filterTeklifler(this.value)">
+          </div>
+          <span class="search-count" id="search-count-teklif"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Teklif No</th>
+                <th>Müşteri</th>
+                <th class="hide-mobile">Tarih</th>
+                <th class="hide-mobile">Geçerlilik</th>
+                <th>Tutar</th>
+                <th class="hide-mobile">Durum</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="teklif-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================================================
+           MÜŞTERİLERİM
+           Next.js: app/(dashboard)/musteriler/page.tsx
+           =================================================== -->
+      <div class="page" id="page-musterilerim">
+        <div class="search-bar-wrap">
+          <div class="search-wrap">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" id="search-musteri" type="text" placeholder="İsim, şirket veya e-posta ara…" oninput="filterMusteriler(this.value)">
+          </div>
+          <span class="search-count" id="search-count-musteri"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Müşteri</th>
+                <th class="hide-mobile">Tür</th>
+                <th class="hide-mobile">E-posta</th>
+                <th class="hide-mobile">Telefon</th>
+                <th class="hide-mobile">Ülke</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="musteri-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================================================
+           ÜRÜNLERİM
+           Next.js: app/(dashboard)/urunler/page.tsx
+           =================================================== -->
+      <div class="page" id="page-urunlerim">
+        <div class="search-bar-wrap">
+          <div class="search-wrap">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" id="search-urun" type="text" placeholder="Ürün adı veya stok kodu ara…" oninput="filterUrunler(this.value)">
+          </div>
+          <span class="search-count" id="search-count-urun"></span>
+        </div>
+        <div class="product-grid" id="urun-grid"></div>
+      </div>
+
+      <!-- ===================================================
+           FİRMA BİLGİLERİM
+           Next.js: app/(dashboard)/firma/page.tsx
+           =================================================== -->
+      <div class="page" id="page-firma-bilgilerim">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Satıcı Firmalarım</span>
+            <button class="btn btn-primary btn-sm" onclick="openFirmaModal()">+ Yeni Firma</button>
+          </div>
+          <div id="firma-list" class="firma-list"></div>
+        </div>
+      </div>
+
+      <!-- ===================================================
+           TASARIM AYARLARI
+           Next.js: app/(dashboard)/tasarim/page.tsx
+           → data-color / data-font attr'ı <html> tag'ına yazılır
+           =================================================== -->
+      <div class="page" id="page-tasarim-ayarlari">
+        <div class="tasarim-layout-v2">
+
+          <!-- Üst sıra: Renk + Font yan yana -->
+          <div class="tasarim-top-row">
+
+            <!-- Renk Teması — 3x2 grid -->
+            <div class="card">
+              <div class="card-header" style="margin-bottom:8px">
+                <span class="card-title">Renk Teması</span>
+              </div>
+              <div class="tasarim-section-label">Vurgu rengi — buton, badge ve aktif öğeler</div>
+              <div class="color-grid-2" id="color-grid">
+                <div class="color-chip-2" data-color="yesil" onclick="setColorTheme('yesil',this)">
+                  <div class="color-chip-2-dot" style="background:#059669"></div>
+                  <span class="color-chip-2-label">Yeşil</span>
+                </div>
+                <div class="color-chip-2" data-color="mavi" onclick="setColorTheme('mavi',this)">
+                  <div class="color-chip-2-dot" style="background:#2563eb"></div>
+                  <span class="color-chip-2-label">Mavi</span>
+                </div>
+                <div class="color-chip-2" data-color="mor" onclick="setColorTheme('mor',this)">
+                  <div class="color-chip-2-dot" style="background:#7c3aed"></div>
+                  <span class="color-chip-2-label">Mor</span>
+                </div>
+                <div class="color-chip-2" data-color="turuncu" onclick="setColorTheme('turuncu',this)">
+                  <div class="color-chip-2-dot" style="background:#ea580c"></div>
+                  <span class="color-chip-2-label">Turuncu</span>
+                </div>
+                <div class="color-chip-2" data-color="pembe" onclick="setColorTheme('pembe',this)">
+                  <div class="color-chip-2-dot" style="background:#db2777"></div>
+                  <span class="color-chip-2-label">Pembe</span>
+                </div>
+                <div class="color-chip-2" data-color="siyah" onclick="setColorTheme('siyah',this)">
+                  <div class="color-chip-2-dot" style="background:#111118;outline:1px solid #ccc;outline-offset:2px"></div>
+                  <span class="color-chip-2-label">Siyah</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Yazı Fontu — 3x2 grid -->
+            <div class="card">
+              <div class="card-header" style="margin-bottom:8px">
+                <span class="card-title">Yazı Fontu</span>
+              </div>
+              <div class="tasarim-section-label">Başlık + içerik fontu birlikte değişir</div>
+              <div class="font-grid-2" id="font-grid">
+
+                <div class="font-chip-2" data-font="space" onclick="setFontTheme('space',this)">
+                  <div class="font-chip-2-preview" style="font-family:'Space Grotesk',sans-serif">Aa</div>
+                  <div class="font-chip-2-info">
+                    <div class="font-chip-2-name">Space Grotesk</div>
+                    <div class="font-chip-2-sub">+ Inter</div>
+                  </div>
+                  <div class="font-chip-2-radio"></div>
+                </div>
+
+                <div class="font-chip-2" data-font="outfit" onclick="setFontTheme('outfit',this)">
+                  <div class="font-chip-2-preview" style="font-family:'Outfit',sans-serif">Aa</div>
+                  <div class="font-chip-2-info">
+                    <div class="font-chip-2-name">Outfit</div>
+                    <div class="font-chip-2-sub">+ Poppins</div>
+                  </div>
+                  <div class="font-chip-2-radio"></div>
+                </div>
+
+                <div class="font-chip-2" data-font="syne" onclick="setFontTheme('syne',this)">
+                  <div class="font-chip-2-preview" style="font-family:'Syne',sans-serif">Aa</div>
+                  <div class="font-chip-2-info">
+                    <div class="font-chip-2-name">Syne</div>
+                    <div class="font-chip-2-sub">+ DM Sans</div>
+                  </div>
+                  <div class="font-chip-2-radio"></div>
+                </div>
+
+                <div class="font-chip-2" data-font="playfair" onclick="setFontTheme('playfair',this)">
+                  <div class="font-chip-2-preview" style="font-family:'Playfair Display',serif">Aa</div>
+                  <div class="font-chip-2-info">
+                    <div class="font-chip-2-name">Playfair</div>
+                    <div class="font-chip-2-sub">+ Lato</div>
+                  </div>
+                  <div class="font-chip-2-radio"></div>
+                </div>
+
+                <div class="font-chip-2" data-font="fraunces" onclick="setFontTheme('fraunces',this)">
+                  <div class="font-chip-2-preview" style="font-family:'Fraunces',serif">Aa</div>
+                  <div class="font-chip-2-info">
+                    <div class="font-chip-2-name">Fraunces</div>
+                    <div class="font-chip-2-sub">+ Nunito</div>
+                  </div>
+                  <div class="font-chip-2-radio"></div>
+                </div>
+
+                <div class="font-chip-2" data-font="bebas" onclick="setFontTheme('bebas',this)">
+                  <div class="font-chip-2-preview" style="font-family:'Bebas Neue',sans-serif;letter-spacing:.04em">Aa</div>
+                  <div class="font-chip-2-info">
+                    <div class="font-chip-2-name">Bebas Neue</div>
+                    <div class="font-chip-2-sub">+ Barlow</div>
+                  </div>
+                  <div class="font-chip-2-radio"></div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Alt: Canlı Önizleme — tam genişlik -->
+          <div class="tasarim-preview-full">
+            <div class="tasarim-preview-full-header" id="prev-header">Canlı Önizleme</div>
+            <div class="tasarim-preview-full-body">
+
+              <!-- Kolon 1: Tipografi -->
+              <div class="prev-col">
+                <div class="prev-col-label">Tipografi</div>
+                <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--text);letter-spacing:-0.02em;line-height:1.1;margin-bottom:6px" id="prev-title">Fiyat Teklifi</div>
+                <div style="font-family:var(--font-body);font-size:0.82rem;color:var(--text-muted);line-height:1.6;margin-bottom:12px" id="prev-body">Müşterilerinize hızlıca proforma teklif oluşturun ve gönderin.</div>
+                <div style="font-family:var(--font-display);font-size:0.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim)" id="prev-fontname">Space Grotesk + Inter</div>
+              </div>
+
+              <!-- Kolon 2: Renk & UI -->
+              <div class="prev-col">
+                <div class="prev-col-label">Renk & UI</div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <button class="prev2-btn" id="prev-btn">+ Teklif Oluştur</button>
+                  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    <span class="prev2-badge" id="prev-badge">Aktif</span>
+                    <span style="background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);font-size:0.68rem;padding:3px 8px;border-radius:6px">Taslak</span>
+                  </div>
+                  <div style="background:var(--accent-glow);border:1px solid rgba(var(--accent-rgb),.2);border-radius:var(--radius);padding:8px 12px;font-size:0.75rem;color:var(--accent);font-weight:500">
+                    ✓ Proforma oluşturuldu
+                  </div>
+                </div>
+              </div>
+
+              <!-- Kolon 3: Seçili tema -->
+              <div class="prev-col">
+                <div class="prev-col-label">Aktif Tema</div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);box-shadow:0 2px 10px rgba(var(--accent-rgb),.35);flex-shrink:0" id="prev-colordot"></div>
+                  <div>
+                    <div style="font-weight:600;font-size:0.85rem;color:var(--text)" id="prev-colorname">Yeşil</div>
+                    <div style="font-size:0.72rem;color:var(--text-dim)">Vurgu rengi</div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--text);flex-shrink:0">A</div>
+                  <div>
+                    <div style="font-weight:600;font-size:0.85rem;color:var(--text)" id="prev-dot">Space Grotesk</div>
+                    <div style="font-size:0.72rem;color:var(--text-dim)">Başlık fontu</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+  </div><!-- /content -->
+  </div><!-- /main-area -->
+</div><!-- /app-shell -->
+
+<!-- =========================================================
+     PRINT TARGET — PDF baskısı için gizli alan
+     Next.js: Ayrı bir /teklif/[id]/print route'u olacak
+     ========================================================= -->
+<div id="print-root"></div>
+
+<!-- =========================================================
+     MODALS
+     ========================================================= -->
+
+<!-- Müşteri Modal -->
+<div class="modal-overlay" id="modal-musteri">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="musteri-modal-title">Müşteri Ekle</span>
+      <button class="modal-close" onclick="closeModal('modal-musteri')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="m-id">
+      <div class="form-grid">
+        <div class="form-field form-full">
+          <label class="form-label">Tür</label>
+          <select class="form-input" id="m-tip" onchange="musteriTipChange()">
+            <option value="bireysel">Bireysel</option>
+            <option value="kurumsal">Kurumsal / Şirket</option>
+          </select>
+        </div>
+        <div class="form-field" id="m-sirket-wrap">
+          <label class="form-label">Şirket Adı</label>
+          <input type="text" class="form-input" id="m-sirket" placeholder="Şirket adı">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Ad Soyad</label>
+          <input type="text" class="form-input" id="m-ad" placeholder="Yetkili kişi adı">
+        </div>
+        <div class="form-field">
+          <label class="form-label">E-posta</label>
+          <input type="email" class="form-input" id="m-email" placeholder="mail@domain.com">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Telefon</label>
+          <input type="text" class="form-input" id="m-tel" placeholder="+90 xxx">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Ülke</label>
+          <input type="text" class="form-input" id="m-ulke" placeholder="Türkiye">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Vergi / Kimlik No</label>
+          <input type="text" class="form-input" id="m-vergi" placeholder="Opsiyonel">
+        </div>
+        <div class="form-field form-full">
+          <label class="form-label">Adres</label>
+          <textarea class="form-input" id="m-adres" placeholder="Fatura adresi" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-musteri')">İptal</button>
+      <button class="btn btn-primary" onclick="kaydetMusteri()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firma Modal -->
+<div class="modal-overlay" id="modal-firma">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="firma-modal-title">Yeni Firma</span>
+      <button class="modal-close" onclick="closeModal('modal-firma')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field form-full">
+          <label class="form-label">Firma Adı</label>
+          <input type="text" class="form-input" id="f-ad" placeholder="Şirketinizin adı">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Vergi No / TC Kimlik</label>
+          <input type="text" class="form-input" id="f-vergi" placeholder="1234567890">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Telefon</label>
+          <input type="text" class="form-input" id="f-tel" placeholder="+90 xxx xxx xx xx">
+        </div>
+        <div class="form-field">
+          <label class="form-label">E-posta</label>
+          <input type="email" class="form-input" id="f-email" placeholder="info@firma.com">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Web Sitesi</label>
+          <input type="text" class="form-input" id="f-web" placeholder="www.firma.com">
+        </div>
+        <div class="form-field form-full">
+          <label class="form-label">Adres</label>
+          <textarea class="form-input" id="f-adres" placeholder="Tam adres" rows="2"></textarea>
+        </div>
+        <div class="form-field form-full">
+          <label class="form-label">Banka Adı</label>
+          <input type="text" class="form-input" id="f-banka" placeholder="Banka adı">
+        </div>
+        <div class="form-field">
+          <label class="form-label">IBAN (TRY)</label>
+          <input type="text" class="form-input" id="f-iban-try" placeholder="TR00 ...">
+        </div>
+        <div class="form-field">
+          <label class="form-label">IBAN (USD)</label>
+          <input type="text" class="form-input" id="f-iban-usd" placeholder="USD IBAN / Swift">
+        </div>
+        <div class="form-field">
+          <label class="form-label">IBAN (EUR)</label>
+          <input type="text" class="form-input" id="f-iban-eur" placeholder="EUR IBAN / Swift">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Logo URL (isteğe bağlı)</label>
+          <input type="text" class="form-input" id="f-logo" placeholder="https://...">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-firma')">İptal</button>
+      <button class="btn btn-primary" onclick="kaydetFirma()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ürün Modal -->
+<div class="modal-overlay" id="modal-urun">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="urun-modal-title">Ürün Ekle</span>
+      <button class="modal-close" onclick="closeModal('modal-urun')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="u-id">
+      <div class="form-grid">
+        <div class="form-field form-full">
+          <label class="form-label">Ürün Adı *</label>
+          <input type="text" class="form-input" id="u-ad" placeholder="Ürün adını girin">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Stok Kodu</label>
+          <input type="text" class="form-input" id="u-kod" placeholder="SKU-001">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Birim</label>
+          <select class="form-input" id="u-birim">
+            <option>Adet</option>
+            <option>Kg</option>
+            <option>Ton</option>
+            <option>Litre</option>
+            <option>Metre</option>
+            <option>M²</option>
+            <option>M³</option>
+            <option>Paket</option>
+            <option>Koli</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Birim Fiyat *</label>
+          <input type="number" class="form-input" id="u-fiyat" placeholder="0.00" step="0.01">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Para Birimi</label>
+          <select class="form-input" id="u-para">
+            <option value="TRY">₺ TRY</option>
+            <option value="USD">$ USD</option>
+            <option value="EUR">€ EUR</option>
+          </select>
+        </div>
+        <div class="form-field form-full">
+          <label class="form-label">Açıklama</label>
+          <textarea class="form-input" id="u-aciklama" placeholder="Ürün açıklaması" rows="2"></textarea>
+        </div>
+        <div class="form-field form-full">
+          <label class="form-label">Görsel URL</label>
+          <input type="url" class="form-input" id="u-gorsel" placeholder="https://example.com/urun.jpg" oninput="previewUrunImg(this.value)">
+          <div style="margin-top:8px" id="u-gorsel-preview"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-urun')">İptal</button>
+      <button class="btn btn-primary" onclick="kaydetUrun()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Teklif Görüntüle / PDF Modal -->
+<div class="modal-overlay" id="modal-teklif-goruntule">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title">Proforma Önizleme</span>
+      <button class="modal-close" onclick="closeModal('modal-teklif-goruntule')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-teklif-icerik"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-teklif-goruntule')">Kapat</button>
+      <button class="btn btn-primary" onclick="teklifPDF()">⬇ PDF İndir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Silme Onayı -->
+<div class="modal-overlay" id="modal-sil">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title">Silme Onayı</span>
+      <button class="modal-close" onclick="closeModal('modal-sil')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="sil-msg" class="text-muted">Bu kaydı silmek istediğinizden emin misiniz?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-sil')">İptal</button>
+      <button class="btn btn-danger" id="sil-confirm-btn">Evet, Sil</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toplu Ürün Ekle Modal -->
+<div class="modal-overlay" id="modal-toplu-urun">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title">Toplu Ürün Ekle</span>
+      <button class="modal-close" onclick="closeModal('modal-toplu-urun')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Adım 1: Şablon İndir -->
+      <div class="toplu-step">
+        <div class="toplu-step-num">1</div>
+        <div class="toplu-step-body">
+          <div class="toplu-step-title">Excel Şablonunu İndirin</div>
+          <div class="toplu-step-desc">Ürün bilgilerini girmek için hazır şablonu indirin. Excel veya Google Sheets ile açabilirsiniz.</div>
+          <button class="btn btn-ghost btn-sm" onclick="indir_sablon()" style="margin-top:10px;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Şablonu İndir (.csv)
+          </button>
+        </div>
+      </div>
+
+      <div class="toplu-divider"></div>
+
+      <!-- Adım 2: Doldur -->
+      <div class="toplu-step">
+        <div class="toplu-step-num">2</div>
+        <div class="toplu-step-body">
+          <div class="toplu-step-title">Şablonu Doldurun</div>
+          <div class="toplu-step-desc">Şablondaki sütun başlıklarını değiştirmeyin. Her satır bir ürün.</div>
+          <div class="toplu-kolon-list">
+            <span class="toplu-kolon">Ürün Adı*</span>
+            <span class="toplu-kolon">Stok Kodu</span>
+            <span class="toplu-kolon">Açıklama</span>
+            <span class="toplu-kolon">Birim</span>
+            <span class="toplu-kolon">Fiyat*</span>
+            <span class="toplu-kolon">Para Birimi</span>
+            <span class="toplu-kolon">Görsel URL</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="toplu-divider"></div>
+
+      <!-- Adım 3: Yükle -->
+      <div class="toplu-step">
+        <div class="toplu-step-num">3</div>
+        <div class="toplu-step-body">
+          <div class="toplu-step-title">Doldurulmuş Dosyayı Yükleyin</div>
+          <div class="toplu-step-desc">CSV veya Excel uyumlu dosyayı seçin.</div>
+          <div class="toplu-dropzone" id="toplu-dropzone" onclick="document.getElementById('toplu-file-input').click()">
+            <div class="toplu-drop-icon">📂</div>
+            <div class="toplu-drop-text">Dosyayı buraya sürükleyin veya tıklayın</div>
+            <div class="toplu-drop-sub">.csv, .txt — maks. 5MB</div>
+          </div>
+          <input type="file" id="toplu-file-input" accept=".csv,.txt" style="display:none" onchange="onTopluFileSelect(this)">
+        </div>
+      </div>
+
+      <!-- Önizleme tablosu -->
+      <div id="toplu-preview-wrap" style="display:none;margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span class="toplu-step-title" id="toplu-preview-title">Önizleme</span>
+          <button class="btn btn-ghost btn-sm" onclick="resetToplu()">↺ Sıfırla</button>
+        </div>
+        <div class="table-wrap" style="max-height:200px;overflow-y:auto">
+          <table id="toplu-preview-table" style="font-size:0.78rem">
+            <thead id="toplu-preview-thead"></thead>
+            <tbody id="toplu-preview-tbody"></tbody>
+          </table>
+        </div>
+        <div id="toplu-hata-wrap" style="margin-top:8px"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-toplu-urun')">İptal</button>
+      <button class="btn btn-primary" id="toplu-ekle-btn" onclick="topluEkle()" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Ürünleri Ekle
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     BOTTOM NAV — Mobil alt navigasyon
+     Next.js: components/layout/BottomNav.tsx
+     ========================================================= -->
+<nav class="bottom-nav" id="bottom-nav">
+  <div class="bottom-nav-inner">
+    <div class="bn-item active" id="bn-dashboard" onclick="navigate('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span class="bn-label">Panel</span>
+    </div>
+    <div class="bn-item" id="bn-teklif-olustur" onclick="navigate('teklif-olustur')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span class="bn-label">Oluştur</span>
+    </div>
+    <div class="bn-item" id="bn-tekliflerim" onclick="navigate('tekliflerim')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span class="bn-label">Teklifler</span>
+    </div>
+    <div class="bn-item" id="bn-musterilerim" onclick="navigate('musterilerim')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <span class="bn-label">Müşteri</span>
+    </div>
+    <div class="bn-item" id="bn-urunlerim" onclick="navigate('urunlerim')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      <span class="bn-label">Ürünler</span>
+    </div>
+  </div>
+</nav>
+
+<!-- =========================================================
+     GÖRSEL LİGHTBOX
+     Next.js: components/ui/Lightbox.tsx
+     ========================================================= -->
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox(null,true)" aria-label="Kapat">✕</button>
+  <div class="lightbox-inner">
+    <img id="lightbox-img" src="" alt="">
+  </div>
+  <div class="lightbox-caption" id="lightbox-caption"></div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     Next.js'e taşınırken:
+     - State → Zustand store'lara
+     - localStorage → API calls (fetch/SWR/React Query)
+     - Render fonksiyonları → React bileşenlere
+     ========================================================= -->
+<!-- Modüller — yükleme SIRASI önemli (birbirlerine bağımlılar) -->
+<script src="js/state.js"></script>
+<script src="js/db.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/helpers.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/musteri.js"></script>
+<script src="js/urun.js"></script>
+<script src="js/toplu-urun.js"></script>
+<script src="js/teklif.js"></script>
+<script src="js/proforma.js"></script>
+<script src="js/firma.js"></script>
+<script src="js/tasarim.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>
