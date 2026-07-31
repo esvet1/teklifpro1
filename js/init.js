@@ -2,6 +2,13 @@
 // INIT
 // =========================================================
 (async function init() {
+  // 0) Giriş yapılmamışsa uygulamayı gösterme
+  const hasSession = authLoadSession();
+  if (!hasSession) { showAuthScreen(); return; }
+  const sessionValid = await authVerifySession();
+  if (!sessionValid) { showAuthScreen(); return; }
+  showApp();
+
   // 1) Önce PocketBase'ten yüklemeyi dene
   let loadedFromPB = false;
   try {

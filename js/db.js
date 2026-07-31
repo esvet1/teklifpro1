@@ -1,4 +1,4 @@
-'use strict'; // v2.1
+'use strict';
 
 // =========================================================
 // DB — PocketBase veri katmanı (v2 — çoklu firma + özel para + VPS)
@@ -22,12 +22,6 @@ function pbBaseUrl() {
 }
 
 let PB_ONLINE = false;
-let PB_TOKEN = localStorage.getItem('pb_token') || '';
-let PB_USER = null;
-try {
-  const savedUser = localStorage.getItem('pb_user');
-  if (savedUser) PB_USER = JSON.parse(savedUser);
-} catch(e) {}
 
 // localId (bizim uid) -> PocketBase record id eşlemesi
 const PB_IDMAP = {
@@ -48,22 +42,15 @@ async function pbFetch(path, options = {}, timeoutMs = 5000) {
   if (!base) throw new Error('PB adresi yok (file:// modu)');
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  
-  const headers = { 
-    'Content-Type': 'application/json', 
-    ...(options.headers || {}) 
-  };
-  
-  // Eğer aktif token varsa authorization header ekle
-  if (PB_TOKEN) {
-    headers['Authorization'] = PB_TOKEN;
-  }
-  
   try {
     const res = await fetch(base + path, {
       ...options,
       signal: ctrl.signal,
-      headers: headers,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken ? { Authorization: authToken } : {}),
+        ...(options.headers || {}),
+      },
     });
     clearTimeout(t);
     if (!res.ok) {
@@ -81,12 +68,9 @@ async function pbFetch(path, options = {}, timeoutMs = 5000) {
 async function pbList(collection) {
   const out = [];
   let page = 1;
-  // Sadece aktif kullanıcının verilerini çekmek için filtre ekle
-  const filterQuery = PB_USER ? `&filter=(user='${PB_USER.id}')` : '';
-  
   while (true) {
     const data = await pbFetch(
-      `/api/collections/${collection}/records?perPage=200&page=${page}&sort=created${filterQuery}`
+      `/api/collections/${collection}/records?perPage=200&page=${page}&sort=created`
     );
     out.push(...data.items);
     if (page >= data.totalPages || data.totalPages === 0) break;
@@ -95,10 +79,6 @@ async function pbList(collection) {
   return out;
 }
 async function pbCreate(collection, body) {
-  // Kayda otomatik aktif kullanıcı ID'sini ekle
-  if (PB_USER && collection !== 'ayarlar') {
-    body.user = PB_USER.id;
-  }
   return await pbFetch(`/api/collections/${collection}/records`, {
     method: 'POST', body: JSON.stringify(body),
   });
@@ -131,6 +111,8 @@ function objToPbBody(obj) {
   body.localId = obj.id;
   delete body.id;
   delete body.createdAt;
+  const uid = getCurrentUserId();
+  if (uid) body.user = uid;
   return body;
 }
 
@@ -144,13 +126,6 @@ async function dbBootstrap() {
   } catch (e) {
     PB_ONLINE = false;
     console.info('[db] PocketBase erişilemedi, localStorage modunda.');
-    showAppLayout(); // Çevrimdışıysa direkt yerel modda aç
-    return false;
-  }
-
-  // Oturum kontrolü
-  if (!PB_TOKEN || !PB_USER) {
-    showAuthLayout();
     return false;
   }
 
@@ -171,6 +146,7 @@ async function dbBootstrap() {
     state.teklifler  = teklifler.map(r => {
       PB_IDMAP.teklifler[r.localId] = r.id;
       const o = pbRecToObj(r);
+      // kalemler JSON string olarak gelebilir → parse et
       if (typeof o.kalemler === 'string') { try { o.kalemler = JSON.parse(o.kalemler); } catch(e){ o.kalemler = []; } }
       return o;
     });
@@ -188,13 +164,10 @@ async function dbBootstrap() {
     console.info('[db] PocketBase yüklendi:',
       state.musteriler.length, 'müşteri,', state.urunler.length, 'ürün,',
       state.teklifler.length, 'teklif,', state.firmalar.length, 'firma.');
-    
-    showAppLayout();
     return true;
   } catch (e) {
-    console.warn('[db] PB okuma hatası, oturum geçersiz olabilir. Girişe yönlendiriliyor:', e.message);
-    // Token geçersizse temizle ve girişe at
-    handleLogout();
+    console.warn('[db] PB okuma hatası:', e.message);
+    PB_ONLINE = false;
     return false;
   }
 }
@@ -204,7 +177,7 @@ async function dbBootstrap() {
 // ---------------------------------------------------------
 let _syncQueue = Promise.resolve();
 function dbSync() {
-  if (!PB_ONLINE || !PB_USER) return;
+  if (!PB_ONLINE) return;
   _syncQueue = _syncQueue.then(() => _syncAll()).catch(e => {
     console.warn('[db] sync hatası:', e.message);
   });
@@ -224,6 +197,7 @@ async function _syncCollection(collection, list, opts = {}) {
   // Ekle/güncelle
   for (const obj of list) {
     const body = objToPbBody(obj);
+    // teklifler.kalemler → JSON alanı (obje olarak gönder, PB serialize eder)
     if (collection === 'teklifler') body.kalemler = obj.kalemler || [];
     if (map[obj.id]) {
       try { await pbUpdate(collection, map[obj.id], body); }
@@ -237,8 +211,8 @@ async function _syncCollection(collection, list, opts = {}) {
 
 async function _syncOzelParalar() {
   const body = { anahtar: 'ozelParalar', deger: state.ozelParalar || [] };
-  // Ayarlara da kullanıcı sahipliği ekle
-  if (PB_USER) body.user = PB_USER.id;
+  const uid = getCurrentUserId();
+  if (uid) body.user = uid;
   try {
     if (PB_AYAR_OZELPARA_RECID) {
       await pbUpdate('ayarlar', PB_AYAR_OZELPARA_RECID, body);
@@ -250,7 +224,7 @@ async function _syncOzelParalar() {
 }
 
 async function _syncAll() {
-  if (!PB_ONLINE || !PB_USER) return;
+  if (!PB_ONLINE) return;
   await _syncCollection('musteriler', state.musteriler);
   await _syncCollection('urunler', state.urunler);
   await _syncCollection('teklifler', state.teklifler);
@@ -262,7 +236,7 @@ async function _syncAll() {
 // Manuel: localStorage → PB taşıma (konsoldan dbMigrateFromLocal())
 // ---------------------------------------------------------
 async function dbMigrateFromLocal() {
-  if (!PB_ONLINE || !PB_USER) { console.warn('PB çevrimdışı veya giriş yapılmadı.'); return; }
+  if (!PB_ONLINE) { console.warn('PB çevrimdışı.'); return; }
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) { console.info('localStorage boş.'); return; }
   const local = JSON.parse(raw);
@@ -274,147 +248,3 @@ async function dbMigrateFromLocal() {
   await _syncAll();
   console.info('[db] localStorage → PocketBase taşındı.');
 }
-
-// =========================================================
-// SAAS AUTH İŞLEMLERİ (Giriş / Kayıt / Çıkış)
-// =========================================================
-
-function toggleAuthBox(mode) {
-  const loginBox = document.getElementById('auth-login-box');
-  const registerBox = document.getElementById('auth-register-box');
-  if (mode === 'register') {
-    loginBox.style.display = 'none';
-    registerBox.style.display = 'block';
-  } else {
-    loginBox.style.display = 'block';
-    registerBox.style.display = 'none';
-  }
-}
-
-function showAuthLayout() {
-  document.getElementById('auth-container').style.display = 'flex';
-  document.querySelector('.app-shell').style.display = 'none';
-}
-
-function showAppLayout() {
-  document.getElementById('auth-container').style.display = 'none';
-  document.querySelector('.app-shell').style.display = 'flex';
-  if (PB_USER) {
-    document.getElementById('sidebar-user-info').textContent = PB_USER.email;
-  }
-}
-
-async function handleLogin(e) {
-  e.preventDefault();
-  const btn = document.getElementById('btn-login-submit');
-  const email = document.getElementById('auth-login-email').value;
-  const password = document.getElementById('auth-login-password').value;
-  
-  btn.disabled = true;
-  btn.textContent = 'Giriş Yapılıyor...';
-  
-  try {
-    const res = await pbFetch('/api/collections/users/auth-with-password', {
-      method: 'POST',
-      body: JSON.stringify({ identity: email, password: password })
-    });
-    
-    PB_TOKEN = res.token;
-    PB_USER = res.record;
-    
-    localStorage.setItem('pb_token', PB_TOKEN);
-    localStorage.setItem('pb_user', JSON.stringify(PB_USER));
-    
-    toast('Giriş başarılı! Yükleniyor...');
-    
-    // Verileri çek ve paneli aç
-    PB_ONLINE = true;
-    const ok = await dbBootstrap();
-    if (ok) {
-      // Sayfayı tamamen yenilemek state ve UI'ı temiz başlatır
-      location.reload();
-    }
-  } catch (err) {
-    console.error(err);
-    toast('Giriş başarısız: E-posta veya şifre hatalı.', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Giriş Yap';
-  }
-}
-
-async function handleRegister(e) {
-  e.preventDefault();
-  const btn = document.getElementById('btn-register-submit');
-  const name = document.getElementById('auth-register-name').value;
-  const email = document.getElementById('auth-register-email').value;
-  const password = document.getElementById('auth-register-password').value;
-  const passwordConfirm = document.getElementById('auth-register-password-confirm').value;
-  
-  if (password !== passwordConfirm) {
-    toast('Şifreler eşleşmiyor.', 'error');
-    return;
-  }
-  
-  if (password.length < 8) {
-    toast('Şifre en az 8 karakter olmalıdır.', 'error');
-    return;
-  }
-  
-  btn.disabled = true;
-  btn.textContent = 'Hesap Oluşturuluyor...';
-  
-  try {
-    // 1) Kullanıcı kaydı oluştur
-    await pbFetch('/api/collections/users/records', {
-      method: 'POST',
-      body: JSON.stringify({
-        email: email,
-        password: password,
-        passwordConfirm: passwordConfirm,
-        name: name
-      })
-    });
-    
-    toast('Kayıt başarılı! Giriş yapılıyor...');
-    
-    // 2) Otomatik giriş yap
-    const res = await pbFetch('/api/collections/users/auth-with-password', {
-      method: 'POST',
-      body: JSON.stringify({ identity: email, password: password })
-    });
-    
-    PB_TOKEN = res.token;
-    PB_USER = res.record;
-    
-    localStorage.setItem('pb_token', PB_TOKEN);
-    localStorage.setItem('pb_user', JSON.stringify(PB_USER));
-    
-    location.reload();
-  } catch (err) {
-    console.error(err);
-    toast('Kayıt başarısız. E-posta adresi kullanımda olabilir.', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Kayıt Ol';
-  }
-}
-
-function handleLogout(e) {
-  if (e) e.preventDefault();
-  
-  PB_TOKEN = '';
-  PB_USER = null;
-  localStorage.removeItem('pb_token');
-  localStorage.removeItem('pb_user');
-  
-  // State'i sıfırla
-  state.musteriler = [];
-  state.urunler = [];
-  state.teklifler = [];
-  state.firmalar = [];
-  
-  toast('Oturum kapatıldı.');
-  location.reload();
-}
-
