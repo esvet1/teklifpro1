@@ -64,54 +64,11 @@
 <body>
 
 <!-- =========================================================
-     GİRİŞ / KAYIT EKRANI
-     Next.js: app/(auth)/login/page.tsx
-     PocketBase 'users' koleksiyonu üzerinden e-posta/şifre auth.
-     ========================================================= -->
-<div class="auth-screen" id="auth-screen">
-  <div class="auth-card">
-    <div class="auth-brand">teklif<span>.</span>pro</div>
-    <div class="auth-sub">Devam etmek için giriş yapın</div>
-
-    <div class="auth-error" id="auth-error"></div>
-
-    <div class="auth-form" id="auth-login-form">
-      <div class="form-field">
-        <label class="form-label">E-posta</label>
-        <input type="email" class="form-input" id="auth-login-email" placeholder="ornek@firma.com" autocomplete="username">
-      </div>
-      <div class="form-field">
-        <label class="form-label">Şifre</label>
-        <input type="password" class="form-input" id="auth-login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitLogin()">
-      </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitLogin()">Giriş Yap</button>
-      <div class="auth-switch">Hesabınız yok mu? <a onclick="toggleAuthMode('register')">Kayıt olun</a></div>
-    </div>
-
-    <div class="auth-form" id="auth-register-form" style="display:none">
-      <div class="form-field">
-        <label class="form-label">E-posta</label>
-        <input type="email" class="form-input" id="auth-reg-email" placeholder="ornek@firma.com" autocomplete="username">
-      </div>
-      <div class="form-field">
-        <label class="form-label">Şifre</label>
-        <input type="password" class="form-input" id="auth-reg-pass" placeholder="En az 8 karakter" autocomplete="new-password">
-      </div>
-      <div class="form-field">
-        <label class="form-label">Şifre (Tekrar)</label>
-        <input type="password" class="form-input" id="auth-reg-pass2" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitRegister()">
-      </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitRegister()">Hesap Oluştur</button>
-      <div class="auth-switch">Zaten hesabınız var mı? <a onclick="toggleAuthMode('login')">Giriş yapın</a></div>
-    </div>
-  </div>
-</div>
-
-<!-- =========================================================
      UYGULAMA KABUĞU
      Next.js: app/layout.tsx → AppShell component
+     Giriş kontrolü js/auth.js → requireAuthOrRedirect() ile init.js'de yapılır.
      ========================================================= -->
-<div class="app-shell" id="app-shell" style="display:none">
+<div class="app-shell" id="app-shell">
 
   <!-- SIDEBAR -->
   <aside class="sidebar">

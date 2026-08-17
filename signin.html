@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giriş Yap · teklif.pro</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="auth-screen" id="auth-screen">
+  <a href="landing.html" class="auth-back">← teklif<span>.</span>pro</a>
+  <div class="auth-card">
+    <div class="auth-brand">teklif<span>.</span>pro</div>
+    <div class="auth-sub">Devam etmek için giriş yapın</div>
+
+    <div class="auth-error" id="auth-error"></div>
+
+    <div class="auth-form" id="auth-login-form">
+      <div class="form-field">
+        <label class="form-label">E-posta</label>
+        <input type="email" class="form-input" id="auth-login-email" placeholder="ornek@firma.com" autocomplete="username">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Şifre</label>
+        <input type="password" class="form-input" id="auth-login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitLogin()">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitLogin()">Giriş Yap</button>
+      <div class="auth-switch">Hesabınız yok mu? <a href="signup.html">Kayıt olun</a></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

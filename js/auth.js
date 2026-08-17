@@ -93,30 +93,30 @@ async function authVerifySession() {
 
 function authLogout() {
   authClearSession();
-  location.reload();
+  location.href = 'signin.html';
 }
 
 // ---------------------------------------------------------
-// UI
+// UI — index.html (dashboard) tarafında oturum kontrolü
 // ---------------------------------------------------------
-function showAuthScreen() {
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('app-shell').style.display = 'none';
-}
-
 function showApp() {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app-shell').style.display = '';
   const userEl = document.getElementById('sidebar-user');
   if (userEl) userEl.textContent = authUser ? authUser.email : '';
 }
 
-function toggleAuthMode(mode) {
-  document.getElementById('auth-login-form').style.display    = mode === 'login'    ? 'flex' : 'none';
-  document.getElementById('auth-register-form').style.display = mode === 'register' ? 'flex' : 'none';
-  document.getElementById('auth-error').textContent = '';
+// index.html açılışında oturum yoksa/ geçersizse signin.html'e yönlendirir.
+async function requireAuthOrRedirect() {
+  const hasSession = authLoadSession();
+  if (!hasSession) { location.href = 'signin.html'; return false; }
+  const sessionValid = await authVerifySession();
+  if (!sessionValid) { location.href = 'signin.html'; return false; }
+  showApp();
+  return true;
 }
 
+// ---------------------------------------------------------
+// UI — signin.html / signup.html
+// ---------------------------------------------------------
 async function submitLogin() {
   const email = document.getElementById('auth-login-email').value.trim();
   const pass  = document.getElementById('auth-login-pass').value;
@@ -125,7 +125,7 @@ async function submitLogin() {
   if (!email || !pass) { errEl.textContent = 'E-posta ve şifre zorunludur.'; return; }
   try {
     await authLogin(email, pass);
-    location.reload();
+    location.href = 'index.html';
   } catch (e) {
     errEl.textContent = 'Giriş başarısız: ' + e.message;
   }
@@ -142,7 +142,7 @@ async function submitRegister() {
   if (pass !== pass2) { errEl.textContent = 'Şifreler eşleşmiyor.'; return; }
   try {
     await authRegister(email, pass, pass2);
-    location.reload();
+    location.href = 'index.html';
   } catch (e) {
     errEl.textContent = 'Kayıt başarısız: ' + e.message;
   }
