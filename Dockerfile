@@ -1,8 +1,7 @@
 FROM nginx:alpine
 
-# Uygulama dosyalarını nginx'in yayın klasörüne kopyala
-COPY index.html /usr/share/nginx/html/
-COPY styles.css /usr/share/nginx/html/
-COPY js/ /usr/share/nginx/html/js/
+# Tüm statik dosyaları nginx yayın klasörüne kopyala
+# (index.html, signin.html, signup.html, landing.html, styles.css, js/, vb.)
+COPY . /usr/share/nginx/html/
 
 EXPOSE 80
