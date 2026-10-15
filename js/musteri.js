@@ -60,6 +60,7 @@ function kaydetMusteri() {
   saveState();
   closeModal('modal-musteri');
   renderMusteriTable();
+  if (typeof renderMusteriSelectGrid === 'function' && state.wizard && state.wizard.step) renderMusteriSelectGrid();
   updateBadges();
 }
 

@@ -78,6 +78,7 @@ function kaydetUrun() {
   saveState();
   closeModal('modal-urun');
   renderUrunGrid();
+  if (typeof renderUrunSelectGrid === 'function' && state.wizard && state.wizard.step) renderUrunSelectGrid();
   updateBadges();
 }
 
