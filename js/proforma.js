@@ -1,7 +1,5 @@
 // PROFORMA RENDER — HTML şablonu
-// Next.js: components/teklif/ProformaTemplate.tsx
 // =========================================================
-// Proformada gösterilecek kur metni (yönüne göre)
 function proformaKurMetni(t) {
   const kaynak = t.kaynakPara, hedef = t.currency, kur = t.kur;
   const tarih = formatTarih(t.createdAt);
@@ -20,7 +18,6 @@ function renderProforma(teklifId) {
   const t = state.teklifler.find(x => x.id === teklifId);
   if (!t) return '<p>Teklif bulunamadı.</p>';
   const m = getMusteriById(t.musteriId);
-  // Satıcı firma: teklifte kayıtlı firma, yoksa varsayılan, o da yoksa boş
   const f = (t.saticiFirmaId && getFirmaById(t.saticiFirmaId))
             || getVarsayilanFirma()
             || { ad:'', vergi:'', adres:'', tel:'', email:'', web:'', banka:'', ibanTry:'', ibanUsd:'', ibanEur:'', logo:'' };
@@ -29,8 +26,13 @@ function renderProforma(teklifId) {
   const kalemRows = t.kalemler.map(k => `
     <tr>
       <td>
-        ${k.gorsel ? `<img src="${escHtml(k.gorsel)}" class="proforma-urun-img" onerror="this.style.display='none'">` : ''}
-        ${escHtml(k.urunAd)}
+        <div class="proforma-urun-cell">
+          ${k.gorsel ? `<img src="${escHtml(k.gorsel)}" class="proforma-urun-img" onerror="this.style.display='none'">` : ''}
+          <div>
+            <div class="proforma-urun-ad">${escHtml(k.urunAd)}</div>
+            ${k.aciklama ? `<div class="proforma-urun-aciklama">${escHtml(k.aciklama)}</div>` : ''}
+          </div>
+        </div>
       </td>
       <td class="num">${k.miktar}</td>
       <td>${escHtml(k.birim)}</td>
@@ -40,16 +42,14 @@ function renderProforma(teklifId) {
     </tr>
   `).join('');
 
+  const odemeVar = f.banka || f.ibanTry || f.ibanUsd || f.ibanEur;
+
   return `
   <div class="proforma-preview">
     <div class="proforma-header">
-      <div>
+      <div class="proforma-header-brand">
+        ${f.logo ? `<img src="${escHtml(f.logo)}" class="proforma-logo" onerror="this.style.display='none'">` : ''}
         <div class="proforma-firma-ad">${escHtml(f.ad || 'Firma Adınız')}<span>.</span></div>
-        <div class="proforma-firma-info">
-          ${f.adres ? escHtml(f.adres)+'<br>' : ''}
-          ${f.tel ? 'T: '+escHtml(f.tel)+'  ' : ''}${f.email ? 'E: '+escHtml(f.email) : ''}<br>
-          ${f.web ? escHtml(f.web) : ''}${f.vergi ? '  |  Vergi No: '+escHtml(f.vergi) : ''}
-        </div>
       </div>
       <div class="proforma-meta">
         <div class="label">PROFORMA FATURA / FİYAT TEKLİFİ</div>
@@ -62,7 +62,7 @@ function renderProforma(teklifId) {
     <div class="proforma-body">
       <div class="proforma-2col">
 
-        <div style="background:#ffffff;border:1px solid #e8e8f0;border-radius:8px;padding:16px">
+        <div class="proforma-box">
           <div class="proforma-section-title">ALICI / MÜŞTERİ</div>
           <div class="proforma-musteri-ad">${m ? escHtml(musteriDisplayAd(m)) : '—'}</div>
           <div class="proforma-musteri-detail">
@@ -75,26 +75,17 @@ function renderProforma(teklifId) {
           </div>
         </div>
 
-        <div style="background:#ffffff;border:1px solid #e8e8f0;border-radius:8px;padding:16px">
+        <div class="proforma-box">
           <div class="proforma-section-title">SATICI / FİRMA</div>
           <div class="proforma-musteri-ad">${escHtml(f.ad || '—')}</div>
           <div class="proforma-musteri-detail">
+            ${t.saticiKisi ? 'İlgili: '+escHtml(t.saticiKisi)+'<br>' : ''}
             ${f.adres ? escHtml(f.adres)+'<br>' : ''}
             ${f.tel ? 'T: '+escHtml(f.tel)+'<br>' : ''}
             ${f.email ? 'E: '+escHtml(f.email)+'<br>' : ''}
             ${f.web ? escHtml(f.web)+'<br>' : ''}
             ${f.vergi ? 'Vergi No: '+escHtml(f.vergi) : ''}
           </div>
-          ${(f.banka || f.ibanTry || f.ibanUsd || f.ibanEur) ? `
-          <div style="margin-top:10px;padding-top:10px;border-top:1px solid #eee">
-            <div class="proforma-section-title" style="margin-bottom:6px">ÖDEME BİLGİLERİ</div>
-            <div class="proforma-musteri-detail">
-              ${f.banka ? 'Banka: '+escHtml(f.banka)+'<br>' : ''}
-              ${f.ibanTry ? '₺ IBAN: '+escHtml(f.ibanTry)+'<br>' : ''}
-              ${f.ibanUsd ? '$ SWIFT/IBAN: '+escHtml(f.ibanUsd)+'<br>' : ''}
-              ${f.ibanEur ? '€ SWIFT/IBAN: '+escHtml(f.ibanEur) : ''}
-            </div>
-          </div>` : ''}
         </div>
 
       </div>
@@ -102,7 +93,7 @@ function renderProforma(teklifId) {
       <table class="proforma-table">
         <thead>
           <tr>
-            <th style="width:35%">Ürün / Hizmet</th>
+            <th style="width:38%">Ürün / Hizmet</th>
             <th class="num">Miktar</th>
             <th>Birim</th>
             <th class="num">Birim Fiyat</th>
@@ -122,12 +113,25 @@ function renderProforma(teklifId) {
         <div class="total-row grand"><span>GENEL TOPLAM</span><span>${sym}${fmt(t.toplamKdvli)}</span></div>
       </div>
 
+      ${odemeVar ? `
+      <div class="proforma-odeme">
+        <div class="proforma-section-title">ÖDEME BİLGİLERİ</div>
+        <div class="proforma-musteri-detail">
+          ${f.banka ? 'Banka: '+escHtml(f.banka)+'<br>' : ''}
+          ${f.ibanTry ? '₺ IBAN: '+escHtml(f.ibanTry)+'<br>' : ''}
+          ${f.ibanUsd ? '$ SWIFT/IBAN: '+escHtml(f.ibanUsd)+'<br>' : ''}
+          ${f.ibanEur ? '€ SWIFT/IBAN: '+escHtml(f.ibanEur) : ''}
+        </div>
+      </div>` : ''}
+
       ${t.not ? `<div class="proforma-not"><strong>Not:</strong> ${escHtml(t.not)}</div>` : ''}
     </div>
 
     <div class="proforma-footer">
-      <span>${escHtml(t.teklifNo)} · ${formatTarih(t.createdAt)}</span>
-      <span style="text-align:right;color:#bbb;font-size:0.7rem">Bu form <strong>www.uygulamalardukkani.com</strong>'dan ücretsiz olarak yapılmıştır.</span>
+      <span class="proforma-footer-firma">
+        ${[f.ad, f.web, f.email, f.tel].filter(Boolean).map(escHtml).join(' • ')}
+      </span>
+      <span class="proforma-footer-brand">Bu form <strong>www.uygulamalardukkani.com</strong>'dan ücretsiz olarak yapılmıştır.</span>
     </div>
   </div>`;
 }
@@ -145,32 +149,21 @@ function goruntuleTeklifPdf(id) {
 
 function teklifPDF() {
   if (!state.currentTeklifId) return;
-
   const t = state.teklifler.find(x => x.id === state.currentTeklifId);
   if (!t) return;
-
-  // 1. Proforma HTML'ini print-root'a yaz
   const printRoot = document.getElementById('print-root');
   printRoot.innerHTML = renderProforma(state.currentTeklifId);
-
-  // 2. Sayfa başlığını ayarla
   const prevTitle = document.title;
   document.title  = t.teklifNo;
-
-  // 3. İki animasyon karesi bekle (tarayıcı DOM'u render etsin)
-  //    sonra bir timeout daha ekle — özellikle mobil Safari için
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       setTimeout(() => {
         window.print();
-
-        // 4. Print dialog kapandıktan sonra temizle
-        //    (print senkron bloklar, bu kod dialog kapanınca çalışır)
         setTimeout(() => {
           document.title   = prevTitle;
           printRoot.innerHTML = '';
         }, 500);
-      }, 120); // tarayıcıya layout hesabı için yeterli süre
+      }, 120);
     });
   });
 }

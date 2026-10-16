@@ -1024,6 +1024,52 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   flex-wrap: wrap;
   border-top: 1px solid #e8e8f0;
 }
+
+/* Header: logo + firma adı yan yana (madde 1) */
+.proforma-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.proforma-logo {
+  max-height: 60px;
+  max-width: 180px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+/* Alıcı/Satıcı kutuları ortak stil */
+.proforma-box {
+  background: #ffffff;
+  border: 1px solid #e8e8f0;
+  border-radius: 8px;
+  padding: 16px;
+}
+/* Ürün hücresi: görsel + ad + açıklama (madde 5) */
+.proforma-urun-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.proforma-urun-ad { font-weight: 600; color: #1a1a2e; }
+.proforma-urun-aciklama {
+  font-size: 0.72rem;
+  color: #888;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+/* Ödeme bilgileri: toplamların altında tam genişlik (madde 2) */
+.proforma-odeme {
+  margin-top: 20px;
+  padding: 14px 16px;
+  background: #fafafb;
+  border: 1px solid #e8e8f0;
+  border-radius: 8px;
+}
+/* Footer firma bilgisi (madde 4) */
+.proforma-footer-firma { color: #555; font-weight: 500; }
+.proforma-footer-brand { text-align: right; color: #bbb; font-size: 0.7rem; }
+
 /* Ürün görseli proformada */
 .proforma-urun-img {
   width: 42px;
@@ -1142,7 +1188,14 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 
   /* ── İçerik sayfa kırılmaları ── */
   .proforma-header  { page-break-inside: avoid; break-inside: avoid; }
-  .proforma-2col    { page-break-inside: avoid; break-inside: avoid; }
+  .proforma-2col    {
+    page-break-inside: avoid; break-inside: avoid;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 24px !important;
+  }
+  .proforma-box { break-inside: avoid; }
+  .proforma-odeme { page-break-inside: avoid; break-inside: avoid; }
 
   /* Tablo: uzun listeler sayfalara bölünebilir */
   .proforma-table   { page-break-inside: auto; break-inside: auto; }

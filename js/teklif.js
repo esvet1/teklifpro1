@@ -12,7 +12,7 @@ function initWizard() {
     return;
   }
 
-  state.wizard = { step:1, editId:null, musteriId:null, saticiFirmaId:null, secilenUrunler:{}, currency:'TRY', kaynakPara:null, kur:1, gecerlilik:'', kdv:20, not:'' };
+  state.wizard = { step:1, editId:null, musteriId:null, saticiFirmaId:null, secilenUrunler:{}, currency:'TRY', kaynakPara:null, kur:1, gecerlilik:'', kdv:20, not:'', saticiKisi:'' };
 
   // Varsayılan satıcı firmayı otomatik seç
   const vf = getVarsayilanFirma();
@@ -22,6 +22,7 @@ function initWizard() {
   document.getElementById('w-gecerlilik').value = d.toISOString().split('T')[0];
   document.getElementById('w-kdv').value = 20;
   document.getElementById('w-not').value = '';
+  { const el=document.getElementById('w-satici-kisi'); if(el) el.value=''; }
 
   // Arama inputlarını sıfırla
   const ms = document.getElementById('w-musteri-search');
@@ -100,7 +101,8 @@ function _applyWizardLoad(t, mode) {
     kur:        (t.kur != null ? t.kur : 1),
     gecerlilik: t.gecerlilik || '',
     kdv:        (t.kdv != null ? t.kdv : 20),
-    not:        t.not || ''
+    not:        t.not || '',
+    saticiKisi: t.saticiKisi || ''
   };
 
   const g = document.getElementById('w-gecerlilik');
@@ -109,6 +111,7 @@ function _applyWizardLoad(t, mode) {
   if (kdvEl) kdvEl.value = (t.kdv != null ? t.kdv : 20);
   const notEl = document.getElementById('w-not');
   if (notEl) notEl.value = t.not || '';
+  { const el=document.getElementById('w-satici-kisi'); if(el) el.value = t.saticiKisi || ''; }
 
   const kurEl = document.getElementById('w-kur');
   if (kurEl) kurEl.value = (t.kur != null ? t.kur : 1);
@@ -166,6 +169,7 @@ function wizardNext(step) {
     state.wizard.kdv        = parseInt(document.getElementById('w-kdv').value) || 0;
     state.wizard.gecerlilik = document.getElementById('w-gecerlilik').value;
     state.wizard.not        = document.getElementById('w-not').value.trim();
+    { const el=document.getElementById('w-satici-kisi'); state.wizard.saticiKisi = el ? el.value.trim() : ''; }
   }
   wizardGotoStep(step);
 }
@@ -663,7 +667,7 @@ function kaydetTeklif() {
     // Birim fiyatı da teklif para birimine çevir (tek kalem, iskontosuz)
     const birimFiyatCevrili = convertTutar(k.birimFiyat);
     return {
-      urunId: id, urunAd: u?.ad||'', gorsel: u?.gorsel||'', birim: u?.birim||'Adet',
+      urunId: id, urunAd: u?.ad||'', aciklama: u?.aciklama||'', gorsel: u?.gorsel||'', birim: u?.birim||'Adet',
       miktar: k.miktar,
       birimFiyat: birimFiyatCevrili,       // proformada gösterilecek (teklif biriminde)
       birimFiyatKaynak: k.birimFiyat,      // orijinal (kaynak birimde)
@@ -692,6 +696,7 @@ function kaydetTeklif() {
     toplamKdvli: genel,
     gecerlilik:  state.wizard.gecerlilik,
     not:         state.wizard.not,
+    saticiKisi:  state.wizard.saticiKisi || '',
     createdAt:   isEdit && mevcut ? mevcut.createdAt : new Date().toISOString()
   };
 
