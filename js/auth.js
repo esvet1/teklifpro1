@@ -108,7 +108,12 @@ function authLogout() {
 // ---------------------------------------------------------
 function showApp() {
   const userEl = document.getElementById('sidebar-user');
-  if (userEl) userEl.textContent = authUser ? authUser.email : '';
+  if (userEl) {
+    const email = authUser ? authUser.email : '';
+    const premium = isPremium();
+    const rozet = `<span class="plan-badge ${premium ? 'plan-premium' : 'plan-free'}">${premium ? 'PREMIUM' : 'FREE'}</span>`;
+    userEl.innerHTML = email ? `<span class="sidebar-user-email">${email.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}</span>${rozet}` : '';
+  }
 }
 
 // index.html açılışında oturum yoksa/ geçersizse signin.html'e yönlendirir.

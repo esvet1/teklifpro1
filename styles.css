@@ -2605,9 +2605,25 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 }
 .sidebar-logout:hover { color: var(--danger); }
 #sidebar-user {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+}
+.sidebar-user-email {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;
+  min-width: 0;
 }
+.plan-badge {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.plan-free { background: var(--surface3); color: var(--text-muted); }
+.plan-premium { background: var(--accent-glow); color: var(--accent); }
