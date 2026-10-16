@@ -49,11 +49,19 @@ function previewUrunImg(url) {
   wrap.innerHTML = `<img src="${escHtml(url)}" style="height:80px;border-radius:8px;border:1px solid var(--border);object-fit:cover" onerror="this.style.display='none'">`;
 }
 
+const FREE_URUN_LIMIT = 5;
+
 function kaydetUrun() {
   const ad = document.getElementById('u-ad').value.trim();
   const fiyat = parseFloat(document.getElementById('u-fiyat').value);
   if (!ad) { toast('Ürün adı zorunludur.', 'error'); return; }
   if (isNaN(fiyat) || fiyat < 0) { toast('Geçerli bir fiyat girin.', 'error'); return; }
+
+  // Free plan ürün limiti (yeni ürün eklerken; düzenlemede serbest)
+  if (!editUrunId && typeof isPremium === 'function' && !isPremium() && state.urunler.length >= FREE_URUN_LIMIT) {
+    toast(`Ücretsiz planda en fazla ${FREE_URUN_LIMIT} ürün ekleyebilirsiniz. Sınırsız ürün için Premium'a geçin.`, 'error');
+    return;
+  }
 
   const urun = {
     id:       editUrunId || uid(),

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>teklif.pro — Yönetim</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 860px; margin: 40px auto; padding: 0 16px; background:#f5f5f7; color:#111; }
+  h1 { font-size: 1.4rem; }
+  .box { background:#fff; border:1px solid #e0e0e8; border-radius:10px; padding:20px; margin-bottom:16px; }
+  input { padding:8px 10px; border:1px solid #ccc; border-radius:6px; font-size:0.9rem; width:100%; box-sizing:border-box; margin-bottom:8px; }
+  button { padding:8px 14px; border:none; border-radius:6px; background:#059669; color:#fff; font-weight:600; cursor:pointer; font-size:0.85rem; }
+  button.sec { background:#e0e0e8; color:#333; }
+  button:disabled { opacity:0.5; cursor:not-allowed; }
+  table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+  th,td { text-align:left; padding:10px 8px; border-bottom:1px solid #eee; }
+  .badge { padding:2px 10px; border-radius:20px; font-size:0.75rem; font-weight:700; }
+  .b-free { background:#eee; color:#666; }
+  .b-premium { background:#d1fae5; color:#047857; }
+  .err { color:#dc2626; font-size:0.85rem; margin-top:8px; }
+  .muted { color:#888; font-size:0.82rem; }
+</style>
+</head>
+<body>
+<h1>teklif.pro — Kullanıcı Yönetimi</h1>
+
+<div class="box" id="login-box">
+  <p class="muted">PocketBase yönetici (superuser) bilgilerinizle giriş yapın.</p>
+  <input type="email" id="a-email" placeholder="Yönetici e-posta" autocomplete="username">
+  <input type="password" id="a-pass" placeholder="Şifre" autocomplete="current-password">
+  <button onclick="adminLogin()">Giriş Yap</button>
+  <div class="err" id="a-err"></div>
+</div>
+
+<div class="box" id="users-box" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <strong id="user-count"></strong>
+    <button class="sec" onclick="loadUsers()">Yenile</button>
+  </div>
+  <table>
+    <thead><tr><th>E-posta</th><th>Plan</th><th>İşlem</th></tr></thead>
+    <tbody id="u-tbody"></tbody>
+  </table>
+</div>
+
+<script>
+const PB = 'https://db.teklifpro.tr';
+let tok = null;
+
+async function adminLogin() {
+  const email = document.getElementById('a-email').value.trim();
+  const pass = document.getElementById('a-pass').value;
+  const err = document.getElementById('a-err');
+  err.textContent = '';
+  try {
+    const r = await fetch(PB + '/api/collections/_superusers/auth-with-password', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ identity: email, password: pass })
+    });
+    if (!r.ok) throw new Error('Giriş başarısız (yönetici bilgileri hatalı)');
+    const d = await r.json();
+    tok = d.token;
+    document.getElementById('login-box').style.display = 'none';
+    document.getElementById('users-box').style.display = 'block';
+    loadUsers();
+  } catch(e) { err.textContent = e.message; }
+}
+
+async function loadUsers() {
+  const tbody = document.getElementById('u-tbody');
+  tbody.innerHTML = '<tr><td colspan="3" class="muted">Yükleniyor…</td></tr>';
+  const r = await fetch(PB + '/api/collections/users/records?perPage=200&sort=-created', { headers:{ Authorization: tok } });
+  const d = await r.json();
+  document.getElementById('user-count').textContent = d.items.length + ' kullanıcı';
+  tbody.innerHTML = d.items.map(u => {
+    const plan = u.plan || 'free';
+    const prem = plan === 'premium';
+    return `<tr>
+      <td>${escp(u.email)}</td>
+      <td><span class="badge ${prem?'b-premium':'b-free'}">${plan}</span></td>
+      <td><button onclick="setPlan('${u.id}','${prem?'free':'premium'}')">${prem?'Free yap':'Premium yap'}</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function setPlan(id, plan) {
+  const r = await fetch(PB + '/api/collections/users/records/' + id, {
+    method:'PATCH', headers:{'Content-Type':'application/json', Authorization: tok },
+    body: JSON.stringify({ plan })
+  });
+  if (r.ok) loadUsers();
+  else alert('Güncellenemedi');
+}
+
+function escp(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>

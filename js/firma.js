@@ -70,6 +70,16 @@ function openFirmaModal(id = null) {
     ['f-ad','f-vergi','f-adres','f-tel','f-email','f-web','f-banka','f-iban-try','f-iban-usd','f-iban-eur','f-logo']
       .forEach(k => set(k, ''));
   }
+  // Logo alanı: free planda kilitli (Premium özelliği)
+  const logoEl = document.getElementById('f-logo');
+  const logoWrap = document.getElementById('f-logo-wrap');
+  const premium = (typeof isPremium === 'function') ? isPremium() : false;
+  if (logoEl) {
+    logoEl.disabled = !premium;
+    logoEl.placeholder = premium ? 'https://...' : '🔒 Premium özelliği — logo ekleyin';
+    if (!premium) logoEl.value = '';
+  }
+  if (logoWrap) logoWrap.style.opacity = premium ? '1' : '0.55';
   document.getElementById('modal-firma').classList.add('open');
 }
 

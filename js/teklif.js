@@ -697,6 +697,7 @@ function kaydetTeklif() {
     gecerlilik:  state.wizard.gecerlilik,
     not:         state.wizard.not,
     saticiKisi:  state.wizard.saticiKisi || '',
+    saticiPremium: (typeof isPremium === 'function') ? isPremium() : false,
     createdAt:   isEdit && mevcut ? mevcut.createdAt : new Date().toISOString()
   };
 

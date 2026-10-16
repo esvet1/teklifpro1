@@ -14,6 +14,13 @@ function proformaKurMetni(t) {
   return `${metin} (${tarih})`;
 }
 
+// Teklifi oluşturan premium mi? Teklife gömülü bayrak öncelikli (paylaşım/view uyumu),
+// yoksa canlı isPremium() (uygulama içi önizleme).
+function proformaPremiumMi(t) {
+  if (t && typeof t.saticiPremium === 'boolean') return t.saticiPremium;
+  return (typeof isPremium === 'function') ? isPremium() : false;
+}
+
 function renderProforma(teklifId) {
   const t = state.teklifler.find(x => x.id === teklifId);
   if (!t) return '<p>Teklif bulunamadı.</p>';
@@ -131,7 +138,7 @@ function renderProforma(teklifId) {
       <span class="proforma-footer-firma">
         ${[f.ad, f.web, f.email, f.tel].filter(Boolean).map(escHtml).join(' • ')}
       </span>
-      <span class="proforma-footer-brand">Bu form <strong>www.uygulamalardukkani.com</strong>'dan ücretsiz olarak yapılmıştır.</span>
+      ${proformaPremiumMi(t) ? '' : `<span class="proforma-footer-brand">Bu form <strong>www.uygulamalardukkani.com</strong>'dan ücretsiz olarak yapılmıştır.</span>`}
     </div>
   </div>`;
 }

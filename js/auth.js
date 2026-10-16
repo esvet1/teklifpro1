@@ -28,7 +28,7 @@ function authLoadSession() {
 
 function authSaveSession(token, record) {
   authToken = token;
-  authUser  = { id: record.id, email: record.email };
+  authUser  = { id: record.id, email: record.email, plan: record.plan || 'free' };
   try { localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ token, user: authUser })); } catch (e) {}
 }
 
@@ -40,6 +40,13 @@ function authClearSession() {
 
 function getCurrentUserId() {
   return authUser ? authUser.id : null;
+}
+
+function getUserPlan() {
+  return authUser && authUser.plan ? authUser.plan : 'free';
+}
+function isPremium() {
+  return getUserPlan() === 'premium';
 }
 
 async function authRequest(path, body) {

@@ -98,5 +98,26 @@
   © 2026 teklif.pro — Tüm hakları saklıdır.
 </footer>
 
+
+<script>
+// Giriş yapmış kullanıcıya "Panele Gir" butonu göster
+(function(){
+  try {
+    var raw = localStorage.getItem('teklif_pro_auth');
+    if (raw) {
+      var s = JSON.parse(raw);
+      if (s && s.token) {
+        // header'daki aksiyonları değiştir
+        var nav = document.querySelector('.landing-nav-actions');
+        if (nav) nav.innerHTML = '<a href="index.html" class="landing-cta">Panele Gir →</a>';
+        // hero butonları
+        var hero = document.querySelector('.landing-hero-actions');
+        if (hero) hero.innerHTML = '<a href="index.html" class="landing-btn-primary">Panele Gir →</a>';
+      }
+    }
+  } catch(e){}
+})();
+</script>
+
 </body>
 </html>
