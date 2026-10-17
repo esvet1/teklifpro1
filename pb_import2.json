@@ -578,7 +578,9 @@
         "system": false,
         "min": 0,
         "max": 0,
-        "pattern": ""
+        "pattern": "",
+        "id": "text_paylasimKodu",
+        "hidden": false
       },
       {
         "name": "saticiFirmaSnapshot",
@@ -586,7 +588,9 @@
         "required": false,
         "presentable": false,
         "system": false,
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json_saticiFirmaSnapshot",
+        "hidden": false
       },
       {
         "name": "musteriSnapshot",
@@ -594,14 +598,18 @@
         "required": false,
         "presentable": false,
         "system": false,
-        "maxSize": 0
+        "maxSize": 0,
+        "id": "json_musteriSnapshot",
+        "hidden": false
       },
       {
         "name": "saticiPremium",
         "type": "bool",
         "required": false,
         "presentable": false,
-        "system": false
+        "system": false,
+        "id": "bool_saticiPremium",
+        "hidden": false
       },
       {
         "name": "saticiKisi",
@@ -611,7 +619,9 @@
         "system": false,
         "min": 0,
         "max": 0,
-        "pattern": ""
+        "pattern": "",
+        "id": "text_saticiKisi",
+        "hidden": false
       },
       {
         "hidden": false,
