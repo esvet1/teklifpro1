@@ -657,6 +657,11 @@ function kaydetTeklif() {
   const keys = Object.keys(state.wizard.secilenUrunler);
   if (!state.wizard.musteriId || !keys.length) { toast('Eksik bilgi var.', 'error'); return; }
 
+  // Bu alanlar 3. adımda; kullanıcı yazdıktan sonra burada okunmalı
+  state.wizard.gecerlilik = document.getElementById('w-gecerlilik').value;
+  state.wizard.not        = document.getElementById('w-not').value.trim();
+  { const el=document.getElementById('w-satici-kisi'); state.wizard.saticiKisi = el ? el.value.trim() : ''; }
+
   const kaynak = state.wizard.kaynakPara || state.wizard.currency;
   const kur    = parseFloat(state.wizard.kur) || 1;
 

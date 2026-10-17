@@ -131,7 +131,7 @@ function renderProforma(teklifId) {
         </div>
       </div>` : ''}
 
-      ${t.not ? `<div class="proforma-not"><strong>Not:</strong> ${escHtml(t.not)}</div>` : ''}
+      ${t.not ? `<div class="proforma-not"><strong>Not:</strong> ${escHtml(t.not).replace(/\n/g, '<br>')}</div>` : ''}
     </div>
 
     <div class="proforma-footer">
