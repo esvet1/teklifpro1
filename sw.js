@@ -1,7 +1,7 @@
 // =========================================================
 // SERVICE WORKER — Offline cache (teklif.pro v2)
 // =========================================================
-const CACHE_NAME = 'teklif-pro-v3';
+const CACHE_NAME = 'teklif-pro-v4';
 const ASSETS = [
   '/',
   '/index.html',
@@ -49,11 +49,9 @@ self.addEventListener('activate', e => {
 
 // Fetch — cache-first, network fallback
 self.addEventListener('fetch', e => {
-  // API isteklerini cache'leme
-  if (e.request.url.includes('/api/')) {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-    return;
-  }
+  // Sadece kendi sitemizin GET isteklerine karış. CDN/PocketBase/font istekleri
+  // tarayıcıya bırakılır (SW içinden fetch CSP connect-src'ye takılıyordu).
+  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) {
@@ -71,7 +69,7 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
         }
         return res;
-      }).catch(() => caches.match('/index.html'));
+      }).catch(() => e.request.mode === 'navigate' ? caches.match('/index.html') : Response.error());
     })
   );
 });
