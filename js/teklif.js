@@ -533,7 +533,7 @@ function renderCurrencyTabs() {
 function promptOzelPara() {
   const kod = (prompt('Para birimi kısaltması girin (örn: CFA, GBP, RUB):') || '').trim().toUpperCase();
   if (!kod) return;
-  if (kod.length > 5) { toast('Kısaltma en fazla 5 karakter olmalı.', 'error'); return; }
+  if (!/^[A-Z]{2,5}$/.test(kod)) { toast('Kısaltma 2-5 harf olmalı (örn: GBP).', 'error'); return; }
   const mevcutlar = ['TRY','USD','EUR', ...(state.ozelParalar||[])];
   if (mevcutlar.includes(kod)) {
     // Zaten varsa direkt seç
@@ -648,8 +648,8 @@ function renderWizardOzet() {
     <div class="divider"></div>
     <div class="text-muted" style="font-size:0.82rem">
       <strong style="color:var(--text)">Ürün Sayısı:</strong> ${Object.keys(state.wizard.secilenUrunler).length} · 
-      <strong style="color:var(--text)">Geçerlilik:</strong> ${state.wizard.gecerlilik || '—'} · 
-      <strong style="color:var(--text)">Para Birimi:</strong> ${cur}
+      <strong style="color:var(--text)">Geçerlilik:</strong> ${escHtml(state.wizard.gecerlilik) || '—'} · 
+      <strong style="color:var(--text)">Para Birimi:</strong> ${escHtml(cur)}
     </div>`;
 }
 
@@ -773,16 +773,16 @@ function renderTeklifTable(q = '') {
       <td>${escHtml(t.teklifNo)}</td>
       <td>${m ? escHtml(musteriDisplayAd(m)) : '—'}</td>
       <td class="hide-mobile">${formatTarih(t.createdAt)}</td>
-      <td class="hide-mobile">${t.gecerlilik || '—'}</td>
+      <td class="hide-mobile">${escHtml(t.gecerlilik) || '—'}</td>
       <td style="font-weight:600;color:var(--accent)">${formatTutar(t.toplamKdvli, t.currency)}</td>
       <td class="hide-mobile"><span class="badge badge-green">Oluşturuldu</span></td>
       <td class="td-actions">
-        <button class="btn btn-ghost btn-sm btn-icon" title="Görüntüle" onclick="goruntuleTeklif('${t.id}')">👁</button>
-        <button class="btn btn-primary btn-sm btn-icon" title="PDF İndir" onclick="goruntuleTeklifPdf('${t.id}')">⬇</button>
-        <button class="btn btn-ghost btn-sm btn-icon" title="Paylaşım linkini kopyala" onclick="kopyalaPaylasimLinki('${t.id}')">🔗</button>
-        <button class="btn btn-ghost btn-sm btn-icon" title="Düzenle" onclick="duzenleTeklif('${t.id}')">✏️</button>
-        <button class="btn btn-ghost btn-sm btn-icon" title="Kopyala ve Düzenle" onclick="kopyalaTeklif('${t.id}')">📋</button>
-        <button class="btn btn-danger btn-sm btn-icon" title="Sil" onclick="silConfirm('teklif','${t.id}','${escHtml(t.teklifNo)} teklifini silmek istediğinizden emin misiniz?')">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-icon" title="Görüntüle" onclick="goruntuleTeklif('${escHtml(t.id)}')">👁</button>
+        <button class="btn btn-primary btn-sm btn-icon" title="PDF İndir" onclick="goruntuleTeklifPdf('${escHtml(t.id)}')">⬇</button>
+        <button class="btn btn-ghost btn-sm btn-icon" title="Paylaşım linkini kopyala" onclick="kopyalaPaylasimLinki('${escHtml(t.id)}')">🔗</button>
+        <button class="btn btn-ghost btn-sm btn-icon" title="Düzenle" onclick="duzenleTeklif('${escHtml(t.id)}')">✏️</button>
+        <button class="btn btn-ghost btn-sm btn-icon" title="Kopyala ve Düzenle" onclick="kopyalaTeklif('${escHtml(t.id)}')">📋</button>
+        <button class="btn btn-danger btn-sm btn-icon" title="Sil" onclick="silConfirm('teklif','${escHtml(t.id)}','${escJs(t.teklifNo)} teklifini silmek istediğinizden emin misiniz?')">🗑</button>
       </td>
     </tr>`;
   }).join('');

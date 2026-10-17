@@ -83,14 +83,14 @@ function renderMusteriTable(q = '') {
   }
   tbody.innerHTML = list.map(m => `
     <tr>
-      <td>${musteriDisplayAd(m)}</td>
+      <td>${escHtml(musteriDisplayAd(m))}</td>
       <td class="hide-mobile"><span class="badge ${m.tip==='kurumsal'?'badge-blue':'badge-gray'}">${m.tip==='kurumsal'?'Kurumsal':'Bireysel'}</span></td>
-      <td class="hide-mobile">${m.email || '—'}</td>
-      <td class="hide-mobile">${m.tel || '—'}</td>
-      <td class="hide-mobile">${m.ulke || '—'}</td>
+      <td class="hide-mobile">${escHtml(m.email) || '—'}</td>
+      <td class="hide-mobile">${escHtml(m.tel) || '—'}</td>
+      <td class="hide-mobile">${escHtml(m.ulke) || '—'}</td>
       <td class="td-actions">
-        <button class="btn btn-ghost btn-sm btn-icon" title="Düzenle" onclick="openMusteriModal('${m.id}')">✏️</button>
-        <button class="btn btn-danger btn-sm btn-icon" title="Sil" onclick="silConfirm('musteri','${m.id}','${musteriDisplayAd(m)} müşterisini silmek istediğinizden emin misiniz?')">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-icon" title="Düzenle" onclick="openMusteriModal('${escHtml(m.id)}')">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" title="Sil" onclick="silConfirm('musteri','${escHtml(m.id)}','${escJs(musteriDisplayAd(m))} müşterisini silmek istediğinizden emin misiniz?')">🗑</button>
       </td>
     </tr>
   `).join('');

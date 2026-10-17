@@ -5,11 +5,11 @@ function proformaKurMetni(t) {
   const tarih = formatTarih(t.createdAt);
   let metin;
   if (hedef === 'TRY' && kaynak !== 'TRY') {
-    metin = `1 ${kaynak} = ${fmt(kur)} TL`;
+    metin = `1 ${escHtml(kaynak)} = ${fmt(kur)} TL`;
   } else if (kaynak === 'TRY' && hedef !== 'TRY') {
-    metin = `1 ${hedef} = ${fmt(kur)} TL`;
+    metin = `1 ${escHtml(hedef)} = ${fmt(kur)} TL`;
   } else {
-    metin = `1 ${kaynak} = ${fmt(kur)} ${hedef}`;
+    metin = `1 ${escHtml(kaynak)} = ${fmt(kur)} ${escHtml(hedef)}`;
   }
   return `${metin} (${tarih})`;
 }
@@ -28,7 +28,7 @@ function renderProforma(teklifId) {
   const f = (t.saticiFirmaId && getFirmaById(t.saticiFirmaId))
             || getVarsayilanFirma()
             || { ad:'', vergi:'', adres:'', tel:'', email:'', web:'', banka:'', ibanTry:'', ibanUsd:'', ibanEur:'', logo:'' };
-  const sym = currencySym(t.currency);
+  const sym = escHtml(currencySym(t.currency));
 
   const kalemRows = t.kalemler.map(k => `
     <tr>
@@ -41,10 +41,10 @@ function renderProforma(teklifId) {
           </div>
         </div>
       </td>
-      <td class="num">${k.miktar}</td>
+      <td class="num">${escHtml(k.miktar)}</td>
       <td>${escHtml(k.birim)}</td>
       <td class="num">${sym}${fmt(k.birimFiyat)}</td>
-      <td class="num">${k.iskonto > 0 ? '%'+k.iskonto : '—'}</td>
+      <td class="num">${k.iskonto > 0 ? '%'+escHtml(k.iskonto) : '—'}</td>
       <td class="num"><strong>${sym}${fmt(k.araToplam)}</strong></td>
     </tr>
   `).join('');
@@ -62,7 +62,7 @@ function renderProforma(teklifId) {
         <div class="label">PROFORMA FATURA / FİYAT TEKLİFİ</div>
         <div class="teklif-no">${escHtml(t.teklifNo)}</div>
         <div class="tarih">Tarih: ${formatTarih(t.createdAt)}</div>
-        ${t.gecerlilik ? `<div class="tarih">Geçerlilik: ${t.gecerlilik}</div>` : ''}
+        ${t.gecerlilik ? `<div class="tarih">Geçerlilik: ${escHtml(t.gecerlilik)}</div>` : ''}
       </div>
     </div>
 
@@ -116,7 +116,7 @@ function renderProforma(teklifId) {
           ? `<div class="total-row kur-row"><span>Kur</span><span>${proformaKurMetni(t)}</span></div>`
           : ''}
         <div class="total-row"><span>Ara Toplam</span><span>${sym}${fmt(t.araToplam)}</span></div>
-        <div class="total-row"><span>KDV (%${t.kdv})</span><span>${sym}${fmt(t.kdvTutar)}</span></div>
+        <div class="total-row"><span>KDV (%${escHtml(t.kdv)})</span><span>${sym}${fmt(t.kdvTutar)}</span></div>
         <div class="total-row grand"><span>GENEL TOPLAM</span><span>${sym}${fmt(t.toplamKdvli)}</span></div>
       </div>
 

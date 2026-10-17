@@ -57,6 +57,7 @@ function toast(msg, type='success') {
 // YARDIMCI FONKSİYONLAR
 // =========================================================
 function uid() {
+  if (crypto && crypto.randomUUID) return crypto.randomUUID().replace(/-/g, '').slice(0, 16);
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
@@ -71,8 +72,10 @@ function generatePaylasimKodu() {
 
 function generateTeklifNo() {
   const y = new Date().getFullYear();
-  const seq = String(state.teklifler.length + 1).padStart(4, '0');
-  return `PRF-${y}-${seq}`;
+  const prefix = `PRF-${y}-`;
+  const max = state.teklifler.reduce((n, t) =>
+    (t.teklifNo || '').startsWith(prefix) ? Math.max(n, parseInt(t.teklifNo.slice(prefix.length)) || 0) : n, 0);
+  return prefix + String(max + 1).padStart(4, '0');
 }
 
 function getMusteriById(id) {
@@ -105,7 +108,12 @@ function currencySym(c) {
 
 function escHtml(str) {
   if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// onclick="fn('...')" içine metin koymak için: önce JS string kaçışı, sonra HTML
+function escJs(str) {
+  return escHtml(String(str == null ? '' : str).replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
 }
 
 // Arama metnini vurgula
@@ -137,7 +145,7 @@ function closeLightbox(e, force) {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeLightbox(null, true);
-    closeSidebar();
+    if (typeof closeSidebar === 'function') closeSidebar();
   }
 });
 

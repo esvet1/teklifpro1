@@ -38,9 +38,9 @@ function renderFirmaList() {
           ${f.varsayilan ? '<span class="firma-badge">Varsayılan</span>' : ''}
         </div>
         <div class="firma-card-actions">
-          ${!f.varsayilan ? `<button class="btn btn-ghost btn-sm" onclick="firmaVarsayilanYap('${f.id}')" title="Varsayılan yap">⭐</button>` : ''}
-          <button class="btn btn-ghost btn-sm btn-icon" onclick="openFirmaModal('${f.id}')" title="Düzenle">✏️</button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="silConfirm('firma','${f.id}','${escHtml(firmaDisplayAd(f))} firmasını silmek istediğinize emin misiniz?')" title="Sil">🗑</button>
+          ${!f.varsayilan ? `<button class="btn btn-ghost btn-sm" onclick="firmaVarsayilanYap('${escHtml(f.id)}')" title="Varsayılan yap">⭐</button>` : ''}
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="openFirmaModal('${escHtml(f.id)}')" title="Düzenle">✏️</button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="silConfirm('firma','${escHtml(f.id)}','${escJs(firmaDisplayAd(f))} firmasını silmek istediğinize emin misiniz?')" title="Sil">🗑</button>
         </div>
       </div>
       <div class="firma-card-info">

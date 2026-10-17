@@ -109,7 +109,7 @@ function renderUrunGrid(q = '') {
   grid.innerHTML = list.map(u => `
     <div class="product-card">
       <div class="product-img${u.gorsel ? ' product-img-clickable' : ''}"
-           ${u.gorsel ? `onclick="openLightbox('${escHtml(u.gorsel)}','${escHtml(u.ad)}')" title="Görseli büyüt"` : ''}>
+           ${u.gorsel ? `onclick="openLightbox('${escJs(u.gorsel)}','${escJs(u.ad)}')" title="Görseli büyüt"` : ''}>
         ${u.gorsel ? `<img src="${escHtml(u.gorsel)}" alt="${escHtml(u.ad)}" onerror="this.parentElement.textContent='📦';this.parentElement.classList.remove('product-img-clickable');this.parentElement.onclick=null">` : '📦'}
       </div>
       <div class="product-info">
@@ -119,8 +119,8 @@ function renderUrunGrid(q = '') {
         <div class="product-footer">
           <div class="product-price">${formatTutar(u.fiyat, u.para)} / ${escHtml(u.birim)}</div>
           <div class="td-actions">
-            <button class="btn btn-ghost btn-sm btn-icon" title="Düzenle" onclick="openUrunModal('${u.id}')">✏️</button>
-            <button class="btn btn-danger btn-sm btn-icon" title="Sil" onclick="silConfirm('urun','${u.id}','${escHtml(u.ad)} ürününü silmek istediğinizden emin misiniz?')">🗑</button>
+            <button class="btn btn-ghost btn-sm btn-icon" title="Düzenle" onclick="openUrunModal('${escHtml(u.id)}')">✏️</button>
+            <button class="btn btn-danger btn-sm btn-icon" title="Sil" onclick="silConfirm('urun','${escHtml(u.id)}','${escJs(u.ad)} ürününü silmek istediğinizden emin misiniz?')">🗑</button>
           </div>
         </div>
       </div>

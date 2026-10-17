@@ -28,11 +28,11 @@
   if (!state.firmalar || !state.firmalar.length) {
     state.firmalar = [{
       id: uid(),
-      ad: 'Redmond Ticaret A.Ş.',
+      ad: 'Firma Adınız',
       vergi: '',
-      adres: 'Atatürk Cad. No:1, İstanbul',
-      tel: '+90 212 000 00 00',
-      email: 'info@redmond.com.tr',
+      adres: '',
+      tel: '',
+      email: '',
       web: '', banka: '', ibanTry: '', ibanUsd: '', ibanEur: '', logo: '',
       varsayilan: true,
       createdAt: new Date().toISOString()

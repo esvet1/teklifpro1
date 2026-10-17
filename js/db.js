@@ -48,7 +48,7 @@ async function pbFetch(path, options = {}, timeoutMs = 5000) {
       signal: ctrl.signal,
       headers: {
         'Content-Type': 'application/json',
-        ...(authToken ? { Authorization: authToken } : {}),
+        ...(authToken ? { Authorization: 'Bearer ' + authToken } : {}),
         ...(options.headers || {}),
       },
     });
@@ -68,9 +68,11 @@ async function pbFetch(path, options = {}, timeoutMs = 5000) {
 async function pbList(collection) {
   const out = [];
   let page = 1;
+  const userId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : null;
+  const userFilter = userId ? `&filter=(user='${userId}')` : '';
   while (true) {
     const data = await pbFetch(
-      `/api/collections/${collection}/records?perPage=200&page=${page}&sort=created`
+      `/api/collections/${collection}/records?perPage=200&page=${page}&sort=created${userFilter}`
     );
     out.push(...data.items);
     if (page >= data.totalPages || data.totalPages === 0) break;

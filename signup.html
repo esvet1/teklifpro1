@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Kayıt Ol · teklif.pro</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,7 +30,8 @@
       </div>
       <div class="form-field">
         <label class="form-label">Şifre</label>
-        <input type="password" class="form-input" id="auth-reg-pass" placeholder="En az 8 karakter" autocomplete="new-password">
+        <input type="password" class="form-input" id="auth-reg-pass" placeholder="En az 8 karakter" autocomplete="new-password" oninput="updatePasswordStrength(this.value)">
+        <div id="pass-strength" style="margin-top:4px;font-size:0.78rem;font-weight:600;"></div>
       </div>
       <div class="form-field">
         <label class="form-label">Şifre (Tekrar)</label>
@@ -47,6 +50,18 @@
 
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.5/dist/pocketbase.umd.js"></script>
 <script src="js/db.js"></script>
+<script src="js/security.js"></script>
 <script src="js/auth.js"></script>
+<script>
+function updatePasswordStrength(val) {
+  const el = document.getElementById('pass-strength');
+  if (!el) return;
+  if (!val) { el.textContent = ''; return; }
+  const s = passwordStrength(val);
+  const colors = ['#dc2626','#ea580c','#ca8a04','#16a34a','#059669','#047857'];
+  el.textContent = 'Güçlülük: ' + s.label;
+  el.style.color = colors[s.score] || '#059669';
+}
+</script>
 </body>
 </html>

@@ -78,7 +78,7 @@ async function loadUsers() {
     return `<tr>
       <td>${escp(u.email)}</td>
       <td><span class="badge ${prem?'b-premium':'b-free'}">${plan}</span></td>
-      <td><button onclick="setPlan('${u.id}','${prem?'free':'premium'}')">${prem?'Free yap':'Premium yap'}</button></td>
+      <td><button onclick="setPlan('${escp(u.id)}','${prem?'free':'premium'}')">${prem?'Free yap':'Premium yap'}</button></td>
     </tr>`;
   }).join('');
 }
@@ -92,7 +92,7 @@ async function setPlan(id, plan) {
   else alert('Güncellenemedi');
 }
 
-function escp(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function escp(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 </script>
 </body>
 </html>

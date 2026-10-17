@@ -7,24 +7,35 @@ tarayıcının localStorage'ına düşer (çevrimdışı çalışır).
 ## Dosya Yapısı
 
 ```
-index.html          → uygulama arayüzü
+index.html          → uygulama arayüzü (PWA destekli)
 styles.css          → tüm stiller
+manifest.json       → PWA web app manifest
+sw.js               → Service Worker (offline cache & stale-while-revalidate)
+landing.html        → tanıtım sayfası
+signin.html         → giriş ekranı (brute-force rate limiting korumalı)
+signup.html         → kayıt ekranı (şifre güçlülük göstergeli)
+admin.html          → yönetici paneli (superuser plan yönetimi)
+view.html           → genel teklif görüntüleme & PDF paylaşım sayfası
 js/
   state.js          → uygulama durumu + localStorage
-  db.js             → PocketBase veri katmanı (adres burada ayarlanır)
-  auth.js           → giriş/kayıt (PocketBase 'users' koleksiyonu)
-  layout.js         → menü, sayfa geçişi
-  helpers.js        → modal, toast, yardımcılar
-  dashboard.js      → gösterge paneli
-  musteri.js        → müşteri yönetimi
-  urun.js           → ürün yönetimi
-  toplu-urun.js     → toplu ürün ekleme (CSV)
-  teklif.js         → teklif sihirbazı + kur + düzenle/kopyala
+  db.js             → PocketBase veri katmanı (Bearer auth + kullanıcı filtreli)
+  auth.js           → giriş/kayıt (şifre politikası + token süresi kontrolü)
+  security.js       → merkezi güvenlik yardımcıları (XSS, URL, token sanitizasyonu)
+  layout.js         → menü, sayfa geçişi, dışa aktarma aksiyonları
+  helpers.js        → modal, toast, güvenli escHtml, crypto-safe uid
+  dashboard.js      → gösterge paneli (filtrelenebilir teklif tablosu)
+  musteri.js        → müşteri yönetimi (XSS korumalı tablo)
+  urun.js           → ürün yönetimi (plan limiti korumalı)
+  toplu-urun.js     → toplu ürün ekleme (CSV) + plan limiti kontrolü
+  teklif.js         → teklif sihirbazı + kur + düzenle/kopyala/paylaş
   proforma.js       → PDF/proforma çıktısı
   firma.js          → çoklu satıcı firma yönetimi
   tasarim.js        → tema ayarları
+  export.js         → CSV dışa aktarma (Müşteri, Ürün, Teklif - Excel UTF-8)
   init.js           → başlangıç
-pb_import2.json     → PocketBase collection şeması (bir kez import edilir)
+pb_import2.json     → PocketBase collection şeması (tüm koleksiyonlarda kullanıcı izolasyonu)
+nginx-default.conf  → Nginx sunucu yapılandırması (CSP, HSTS, X-Frame-Options vb.)
+Dockerfile          → Production Docker yapılandırması (hassas dosya izolasyonu)
 ```
 
 ## PocketBase Adresi
@@ -34,30 +45,37 @@ adresini tutar. Uygulama ayrı bir adreste yayınlanıyorsa burası dolu olmalı
 Uygulama PocketBase'in `pb_public` klasöründen servis ediliyorsa boş bırakılabilir
 (adres otomatik bulunur).
 
-## Kurulum
+## Kurulum & Güvenlik Güncellemesi
 
 1. PocketBase'i çalıştır.
-2. Admin panelinden `pb_import2.json` şemasını içe aktar (Settings → Import collections, Merge açık).
-3. Uygulamayı statik olarak yayınla (herhangi bir statik sunucu veya PocketBase pb_public).
+2. Admin panelinden güncellenmiş `pb_import2.json` şemasını içe aktar:
+   **Settings → Import collections → Merge açık**.
+   > **Önemli:** `pb_import2.json` artık `musteriler`, `urunler`, `firmalar` ve `ayarlar`
+   > koleksiyonları için `@request.auth.id != "" && user = @request.auth.id` kuralını
+   > zorunlu kılar. Böylece verileriniz internete açık olmaktan tamamen korunur.
+3. Uygulamayı statik olarak yayınla (herhangi bir statik sunucu, Nginx veya PocketBase pb_public).
 
-## Giriş / Kimlik Doğrulama
+## Güvenlik Özellikleri (V2)
 
-`musteriler`, `urunler`, `teklifler`, `firmalar`, `ayarlar` koleksiyonlarının API kuralları
-`@request.auth.id != "" && user = @request.auth.id` şeklinde ayarlıdır: her kayıt sadece
-onu oluşturan kullanıcı tarafından görülebilir/değiştirilebilir. Bu yüzden uygulama artık
-`js/auth.js` üzerinden PocketBase'in yerleşik **users** koleksiyonuyla giriş/kayıt yapıyor.
+- **Kullanıcı Veri İzolasyonu:** PocketBase tarafında her kayıt oluşturan kullanıcıya bağlıdır (`user = @request.auth.id`).
+- **XSS Koruması:** `escHtml()` tek tırnak (`'`) dahil tüm tehlikeli karakterleri dönüştürür; tüm dinamik DOM çıktıları sanitize edilmiştir.
+- **Kriptografik Kimlikler:** `crypto.randomUUID()` ve `crypto.getRandomValues()` ile tahmin edilemez ID ve paylaşım kodları.
+- **Güçlü Şifre Politikası:** En az 8 karakter, büyük harf, küçük harf ve rakam zorunluluğu + anlık güçlülük göstergesi.
+- **Brute-Force Koruması:** Giriş denemelerinde 5 başarısız denemede 30 saniye kilit süresi.
+- **Bearer Token Doğrulaması & Expiry:** JWT süresi dolmuşsa oturum otomatik sonlandırılır.
+- **HTTP Güvenlik Başlıkları:** Nginx üzerinde CSP (Content-Security-Policy), HSTS, X-Frame-Options (DENY), X-Content-Type-Options (nosniff) aktif.
 
-- Kayıt ekranı `POST /api/collections/users/records`'a public erişim gerektirir. PocketBase
-  admin panelinde **users** koleksiyonunun `createRule`'ının açık (`""`) olduğundan emin olun;
-  self-servis kayıt istemiyorsanız bu kuralı kapatıp hesapları admin panelinden manuel açın.
-- `users` koleksiyonunun `listRule`/`viewRule` kurallarının açık **olmamasına** dikkat edin —
-  aksi halde bir kullanıcı diğerlerinin e-posta adreslerini listeleyebilir.
+## Yeni Özellikler (V2)
+
+- **PWA (Progressive Web App):** Uygulama masaüstü veya mobil cihazlara yüklenebilir (`manifest.json` + `sw.js`).
+- **Offline / Çevrimdışı Çalışma:** Service Worker ile ağ bağlantısı kopsa dahi uygulama açılır ve yerel verilerle çalışır.
+- **CSV Dışa Aktarma:** Müşteriler, ürünler ve fiyat teklifleri tek tıkla Excel uyumlu (BOM UTF-8, noktalı virgül) CSV formatında indirilebilir.
 
 ## Yerel Test
 
 Basit bir yerel sunucuyla açılabilir (doğrudan dosya olarak açmak yerine):
 
-```
+```bash
 python3 -m http.server 3000
 ```
 

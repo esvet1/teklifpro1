@@ -10,7 +10,7 @@ function populateDashboardYillar() {
     state.teklifler.map(t => new Date(t.createdAt).getFullYear())
   )].sort((a,b) => b - a);
   sel.innerHTML = '<option value="">Tüm Yıllar</option>' +
-    yillar.map(y => `<option value="${y}"${String(y)===current?'selected':''}>${y}</option>`).join('');
+    yillar.map(y => `<option value="${y}"${String(y)===current?' selected':''}>${y}</option>`).join('');
 }
 
 function resetDashboardFilter() {
@@ -102,12 +102,12 @@ function renderDashboard() {
       <td style="font-weight:600">${escHtml(t.teklifNo)}</td>
       <td>${m ? escHtml(musteriDisplayAd(m)) : '—'}</td>
       <td class="hide-mobile">${formatTarih(t.createdAt)}</td>
-      <td class="hide-mobile">${t.gecerlilik || '—'}</td>
+      <td class="hide-mobile">${escHtml(t.gecerlilik) || '—'}</td>
       <td style="color:var(--accent);font-weight:600">${formatTutar(t.toplamKdvli, t.currency)}</td>
       <td class="hide-mobile"><span class="badge badge-green">Oluşturuldu</span></td>
       <td class="td-actions">
-        <button class="btn btn-ghost btn-sm btn-icon" title="Görüntüle" onclick="goruntuleTeklif('${t.id}')">👁</button>
-        <button class="btn btn-primary btn-sm btn-icon" title="PDF İndir" onclick="goruntuleTeklifPdf('${t.id}')">⬇</button>
+        <button class="btn btn-ghost btn-sm btn-icon" title="Görüntüle" onclick="goruntuleTeklif('${escHtml(t.id)}')">👁</button>
+        <button class="btn btn-primary btn-sm btn-icon" title="PDF İndir" onclick="goruntuleTeklifPdf('${escHtml(t.id)}')">⬇</button>
       </td>
     </tr>`;
   }).join('');

@@ -26,11 +26,16 @@
 <div id="print-root"></div>
 
 <script src="js/helpers.js"></script>
+<script src="js/security.js"></script>
 <script src="js/proforma.js"></script>
 <script>
 'use strict';
 // view.html giriş yapmadan çalışır — veri teklife gömülü snapshot'lardan okunur.
-const PB = 'https://db.teklifpro.tr';
+const PB = (function() {
+  // db.js yüklüyse oradan al, yoksa sabit adres
+  if (typeof pbBaseUrl === 'function') return pbBaseUrl();
+  return 'https://db.teklifpro.tr';
+})();
 
 // renderProforma'nın beklediği global'leri snapshot'tan besle
 var state = { teklifler: [], currentTeklifId: null };
@@ -50,7 +55,7 @@ async function loadTeklif() {
   if (!kod) { box.innerHTML = '<div class="view-msg">Geçersiz link.</div>'; return; }
   try {
     // kod hem filter'da (sorgu) hem query param'da (API kuralı doğrulaması) gönderilir
-    const safeKod = kod.replace(/"/g, '');
+    const safeKod = kod.replace(/[^a-zA-Z0-9]/g, '');
     const url = PB + '/api/collections/teklifler/records?perPage=1&kod=' +
                 encodeURIComponent(safeKod) + '&filter=' +
                 encodeURIComponent('paylasimKodu="' + safeKod + '"');

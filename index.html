@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Fiyat Teklifi Aracı</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#059669">
 
 <!-- 
   ============================================================
@@ -982,19 +986,27 @@
      - Render fonksiyonları → React bileşenlere
      ========================================================= -->
 <!-- Modüller — yükleme SIRASI önemli (birbirlerine bağımlılar) -->
-<script src="js/state.js?v=5"></script>
-<script src="js/db.js?v=5"></script>
-<script src="js/auth.js?v=5"></script>
-<script src="js/layout.js?v=5"></script>
-<script src="js/helpers.js?v=5"></script>
-<script src="js/dashboard.js?v=5"></script>
-<script src="js/musteri.js?v=5"></script>
-<script src="js/urun.js?v=5"></script>
-<script src="js/toplu-urun.js?v=5"></script>
-<script src="js/teklif.js?v=5"></script>
-<script src="js/proforma.js?v=5"></script>
-<script src="js/firma.js?v=5"></script>
-<script src="js/tasarim.js?v=5"></script>
-<script src="js/init.js?v=5"></script>
+<script src="js/state.js?v=6"></script>
+<script src="js/db.js?v=6"></script>
+<script src="js/auth.js?v=6"></script>
+<script src="js/security.js?v=6"></script>
+<script src="js/layout.js?v=6"></script>
+<script src="js/helpers.js?v=6"></script>
+<script src="js/dashboard.js?v=6"></script>
+<script src="js/musteri.js?v=6"></script>
+<script src="js/urun.js?v=6"></script>
+<script src="js/toplu-urun.js?v=6"></script>
+<script src="js/teklif.js?v=6"></script>
+<script src="js/proforma.js?v=6"></script>
+<script src="js/firma.js?v=6"></script>
+<script src="js/tasarim.js?v=6"></script>
+<script src="js/export.js?v=6"></script>
+<script src="js/init.js?v=6"></script>
+<script>
+  // Service Worker kaydı (PWA)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+</script>
 </body>
 </html>

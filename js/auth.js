@@ -35,7 +35,7 @@ function authSaveSession(token, record) {
 function authClearSession() {
   authToken = null;
   authUser  = null;
-  try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (e) {}
+  try { localStorage.removeItem(AUTH_STORAGE_KEY); localStorage.removeItem('teklif_pro_data'); } catch (e) {}
 }
 
 function getCurrentUserId() {
@@ -87,13 +87,18 @@ async function authVerifySession() {
   try {
     const res = await fetch(base + '/api/collections/users/auth-refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': authToken },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
     });
     if (!res.ok) { authClearSession(); return false; }
     const data = await res.json();
     authSaveSession(data.token, data.record);
     return true;
   } catch (e) {
+    // Ağ hatası — token'ın süresini kontrol et
+    if (typeof isTokenExpired === 'function' && isTokenExpired(authToken)) {
+      authClearSession();
+      return false;
+    }
     return true;
   }
 }
@@ -129,17 +134,36 @@ async function requireAuthOrRedirect() {
 // ---------------------------------------------------------
 // UI — signin.html / signup.html
 // ---------------------------------------------------------
+let _loginAttempts = 0;
+let _loginLockUntil = 0;
+
 async function submitLogin() {
   const email = document.getElementById('auth-login-email').value.trim();
   const pass  = document.getElementById('auth-login-pass').value;
   const errEl = document.getElementById('auth-error');
   errEl.textContent = '';
+  // Rate limiting
+  if (Date.now() < _loginLockUntil) {
+    const sn = Math.ceil((_loginLockUntil - Date.now()) / 1000);
+    errEl.textContent = `Çok fazla deneme. ${sn} saniye bekleyin.`;
+    return;
+  }
   if (!email || !pass) { errEl.textContent = 'E-posta ve şifre zorunludur.'; return; }
+  if (typeof isValidEmail === 'function' && !isValidEmail(email)) {
+    errEl.textContent = 'Geçerli bir e-posta adresi girin.'; return;
+  }
   try {
     await authLogin(email, pass);
+    _loginAttempts = 0;
     location.href = 'index.html';
   } catch (e) {
-    errEl.textContent = 'Giriş başarısız: ' + e.message;
+    _loginAttempts++;
+    if (_loginAttempts >= 5) {
+      _loginLockUntil = Date.now() + 30000; // 30 saniye kilitle
+      errEl.textContent = 'Çok fazla başarısız deneme. 30 saniye bekleyin.';
+    } else {
+      errEl.textContent = 'Giriş başarısız: ' + e.message;
+    }
   }
 }
 
@@ -151,6 +175,9 @@ async function submitRegister() {
   errEl.textContent = '';
   if (!email || !pass) { errEl.textContent = 'E-posta ve şifre zorunludur.'; return; }
   if (pass.length < 8) { errEl.textContent = 'Şifre en az 8 karakter olmalı.'; return; }
+  if (!/[a-z]/.test(pass) || !/[A-Z]/.test(pass) || !/\d/.test(pass)) {
+    errEl.textContent = 'Şifre en az 1 küçük harf, 1 büyük harf ve 1 rakam içermelidir.'; return;
+  }
   if (pass !== pass2) { errEl.textContent = 'Şifreler eşleşmiyor.'; return; }
   try {
     await authRegister(email, pass, pass2);

@@ -192,6 +192,16 @@ function showTopluHata(msg) {
 
 function topluEkle() {
   if (!topluParsedData.length) return;
+
+  if (typeof isPremium === 'function' && !isPremium()) {
+    const freeLimit = typeof FREE_URUN_LIMIT !== 'undefined' ? FREE_URUN_LIMIT : 5;
+    const yeniEklenecekler = topluParsedData.filter(u => !state.urunler.some(x => x.ad.toLowerCase() === u.ad.toLowerCase())).length;
+    if (state.urunler.length + yeniEklenecekler > freeLimit) {
+      toast(`Ücretsiz planda en fazla ${freeLimit} ürün ekleyebilirsiniz. Toplu ekleme için Premium'a geçin.`, 'error');
+      return;
+    }
+  }
+
   const simdi = new Date().toISOString();
   let eklenen = 0, guncellenen = 0;
 
