@@ -159,3 +159,29 @@ async function submitRegister() {
     errEl.textContent = 'Kayıt başarısız: ' + e.message;
   }
 }
+
+// ---------------------------------------------------------
+// Google OAuth2 (PocketBase SDK ile)
+// ---------------------------------------------------------
+async function loginWithGoogle() {
+  const errEl = document.getElementById('auth-error');
+  if (errEl) errEl.textContent = '';
+  try {
+    if (typeof PocketBase === 'undefined') {
+      throw new Error('OAuth bileşeni yüklenemedi, sayfayı yenileyin.');
+    }
+    const pb = new PocketBase(pbBaseUrl());
+    const authData = await pb.collection('users').authWithOAuth2({ provider: 'google' });
+    // Oturumu kendi formatımıza kaydet (db.js/auth.js ile uyumlu)
+    authSaveSession(pb.authStore.token, authData.record);
+    // Yeni Google kullanıcısına plan atanmamışsa free yap
+    if (!authData.record.plan) {
+      try {
+        await pb.collection('users').update(authData.record.id, { plan: 'free' });
+      } catch (e) {}
+    }
+    location.href = 'index.html';
+  } catch (e) {
+    if (errEl) errEl.textContent = 'Google ile giriş başarısız: ' + (e.message || e);
+  }
+}

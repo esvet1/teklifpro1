@@ -2627,3 +2627,38 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 }
 .plan-free { background: var(--surface3); color: var(--text-muted); }
 .plan-premium { background: var(--accent-glow); color: var(--accent); }
+
+/* Google OAuth butonu + ayırıcı (signin/signup) */
+.auth-or {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 16px 0;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+.auth-or::before, .auth-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.auth-or span { padding: 0 12px; }
+.btn-google {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: #fff;
+  color: #333;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: var(--font-body);
+}
+.btn-google:hover { background: #f7f7f9; border-color: var(--text-dim); }
