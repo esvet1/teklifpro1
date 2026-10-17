@@ -357,11 +357,11 @@
     "id": "pbc_teklif_tklf01",
     "name": "teklifler",
     "type": "base",
-    "listRule": "",
-    "viewRule": "",
-    "createRule": "",
-    "updateRule": "",
-    "deleteRule": "",
+    "listRule": "(@request.auth.id != \"\" && user = @request.auth.id) || (@request.query.kod != \"\" && paylasimKodu = @request.query.kod)",
+    "viewRule": "(@request.auth.id != \"\" && user = @request.auth.id) || (@request.query.kod != \"\" && paylasimKodu = @request.query.kod)",
+    "createRule": "@request.auth.id != \"\" && user = @request.auth.id",
+    "updateRule": "@request.auth.id != \"\" && user = @request.auth.id",
+    "deleteRule": "@request.auth.id != \"\" && user = @request.auth.id",
     "fields": [
       {
         "autogeneratePattern": "[a-z0-9]{15}",
@@ -569,6 +569,49 @@
         "required": false,
         "system": false,
         "type": "editor"
+      },
+      {
+        "name": "paylasimKodu",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "system": false,
+        "min": 0,
+        "max": 0,
+        "pattern": ""
+      },
+      {
+        "name": "saticiFirmaSnapshot",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "system": false,
+        "maxSize": 0
+      },
+      {
+        "name": "musteriSnapshot",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "system": false,
+        "maxSize": 0
+      },
+      {
+        "name": "saticiPremium",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "system": false
+      },
+      {
+        "name": "saticiKisi",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "system": false,
+        "min": 0,
+        "max": 0,
+        "pattern": ""
       },
       {
         "hidden": false,

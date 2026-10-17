@@ -60,6 +60,15 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+// Paylaşım kodu — tahmin edilemez, URL-güvenli ~22 karakter
+function generatePaylasimKodu() {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const buf = (crypto && crypto.getRandomValues) ? crypto.getRandomValues(new Uint8Array(22)) : null;
+  let s = '';
+  for (let i = 0; i < 22; i++) s += chars[(buf ? buf[i] : Math.floor(Math.random()*256)) % chars.length];
+  return s;
+}
+
 function generateTeklifNo() {
   const y = new Date().getFullYear();
   const seq = String(state.teklifler.length + 1).padStart(4, '0');

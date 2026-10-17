@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proforma Teklif · teklif.pro</title>
+<link rel="stylesheet" href="styles.css?v=4">
+<style>
+  body { background:#f1f5f9; }
+  .view-wrap { max-width:900px; margin:0 auto; padding:24px 16px 64px; }
+  .view-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap; }
+  .view-brand { font-weight:700; color:#0f172a; }
+  .view-card { background:#fff; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); padding:8px; }
+  .view-msg { text-align:center; padding:64px 16px; color:#64748b; }
+  @media print { .view-bar, body { background:#fff; } .view-bar { display:none; } .view-card { box-shadow:none; padding:0; } }
+</style>
+</head>
+<body>
+<div class="view-wrap">
+  <div class="view-bar">
+    <span class="view-brand">teklif.pro</span>
+    <button id="pdf-btn" class="btn btn-primary" style="display:none" onclick="teklifPDF()">⬇ PDF İndir</button>
+  </div>
+  <div id="view-content" class="view-card"><div class="view-msg">Teklif yükleniyor…</div></div>
+</div>
+<div id="print-root"></div>
+
+<script src="js/helpers.js"></script>
+<script src="js/proforma.js"></script>
+<script>
+'use strict';
+// view.html giriş yapmadan çalışır — veri teklife gömülü snapshot'lardan okunur.
+const PB = 'https://db.teklifpro.tr';
+
+// renderProforma'nın beklediği global'leri snapshot'tan besle
+var state = { teklifler: [], currentTeklifId: null };
+function getMusteriById() { const t = state.teklifler[0]; return t && t.musteriSnapshot ? t.musteriSnapshot : null; }
+function getFirmaById()   { const t = state.teklifler[0]; return t && t.saticiFirmaSnapshot ? t.saticiFirmaSnapshot : null; }
+function getVarsayilanFirma() { return getFirmaById(); }
+function toast(){}
+
+function getKod() {
+  const p = new URLSearchParams(location.search);
+  return (p.get('kod') || '').trim();
+}
+
+async function loadTeklif() {
+  const box = document.getElementById('view-content');
+  const kod = getKod();
+  if (!kod) { box.innerHTML = '<div class="view-msg">Geçersiz link.</div>'; return; }
+  try {
+    // kod hem filter'da (sorgu) hem query param'da (API kuralı doğrulaması) gönderilir
+    const safeKod = kod.replace(/"/g, '');
+    const url = PB + '/api/collections/teklifler/records?perPage=1&kod=' +
+                encodeURIComponent(safeKod) + '&filter=' +
+                encodeURIComponent('paylasimKodu="' + safeKod + '"');
+    const res = await fetch(url);
+    const data = await res.json().catch(() => ({}));
+    const rec = data.items && data.items[0];
+    if (!res.ok || !rec) { box.innerHTML = '<div class="view-msg">Teklif bulunamadı veya kaldırılmış.</div>'; return; }
+    // PocketBase kaydı app'in teklif objesi: json alanlar string gelebilir, parse et
+    ['kalemler','saticiFirmaSnapshot','musteriSnapshot'].forEach(k => {
+      if (typeof rec[k] === 'string') { try { rec[k] = JSON.parse(rec[k]); } catch(e){} }
+    });
+    rec.id = rec.localId || rec.id;
+    state.teklifler = [rec];
+    state.currentTeklifId = rec.id;
+    box.innerHTML = renderProforma(rec.id);
+    document.getElementById('pdf-btn').style.display = '';
+  } catch (e) {
+    box.innerHTML = '<div class="view-msg">Teklif yüklenemedi. Daha sonra tekrar deneyin.</div>';
+  }
+}
+loadTeklif();
+</script>
+</body>
+</html>

@@ -681,11 +681,29 @@ function kaydetTeklif() {
   const isEdit = !!state.wizard.editId;
   const mevcut = isEdit ? state.teklifler.find(x => x.id === state.wizard.editId) : null;
 
+  // Satıcı firmayı teklife göm (view.html giriş yapmadan firmalar'a erişemez)
+  const firma = (state.wizard.saticiFirmaId && getFirmaById(state.wizard.saticiFirmaId)) || getVarsayilanFirma() || null;
+  const saticiFirmaSnapshot = firma ? {
+    ad:firma.ad||'', vergi:firma.vergi||'', adres:firma.adres||'', tel:firma.tel||'',
+    email:firma.email||'', web:firma.web||'', banka:firma.banka||'',
+    ibanTry:firma.ibanTry||'', ibanUsd:firma.ibanUsd||'', ibanEur:firma.ibanEur||'', logo:firma.logo||''
+  } : null;
+
+  // Alıcı müşteriyi de göm (view.html müşteriler'e erişemez)
+  const mus = getMusteriById(state.wizard.musteriId);
+  const musteriSnapshot = mus ? {
+    tip:mus.tip||'', ad:mus.ad||'', soyad:mus.soyad||'', sirket:mus.sirket||'',
+    email:mus.email||'', tel:mus.tel||'', adres:mus.adres||'', ulke:mus.ulke||'', vergi:mus.vergi||''
+  } : null;
+
   const teklif = {
     id:          isEdit ? state.wizard.editId : uid(),
     teklifNo:    isEdit && mevcut ? mevcut.teklifNo : generateTeklifNo(),
+    paylasimKodu: isEdit && mevcut && mevcut.paylasimKodu ? mevcut.paylasimKodu : generatePaylasimKodu(),
     musteriId:   state.wizard.musteriId,
     saticiFirmaId: state.wizard.saticiFirmaId || null,
+    saticiFirmaSnapshot,
+    musteriSnapshot,
     currency:    state.wizard.currency,
     kaynakPara:  kaynak,
     kur:         kur,
@@ -713,6 +731,20 @@ function kaydetTeklif() {
   // Otomatik PDF göster
   setTimeout(() => goruntuleTeklif(teklif.id), 600);
   navigate('tekliflerim');
+}
+
+// Paylaşım linkini panoya kopyala (kod yoksa eski teklife üret + kaydet)
+function kopyalaPaylasimLinki(id) {
+  const t = state.teklifler.find(x => x.id === id);
+  if (!t) return;
+  if (!t.paylasimKodu) { t.paylasimKodu = generatePaylasimKodu(); saveState(); }
+  const url = location.origin + '/view.html?kod=' + t.paylasimKodu;
+  const done = () => toast('✓ Paylaşım linki kopyalandı');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(done).catch(() => prompt('Linki kopyalayın:', url));
+  } else {
+    prompt('Linki kopyalayın:', url);
+  }
 }
 
 // =========================================================
@@ -747,6 +779,7 @@ function renderTeklifTable(q = '') {
       <td class="td-actions">
         <button class="btn btn-ghost btn-sm btn-icon" title="Görüntüle" onclick="goruntuleTeklif('${t.id}')">👁</button>
         <button class="btn btn-primary btn-sm btn-icon" title="PDF İndir" onclick="goruntuleTeklifPdf('${t.id}')">⬇</button>
+        <button class="btn btn-ghost btn-sm btn-icon" title="Paylaşım linkini kopyala" onclick="kopyalaPaylasimLinki('${t.id}')">🔗</button>
         <button class="btn btn-ghost btn-sm btn-icon" title="Düzenle" onclick="duzenleTeklif('${t.id}')">✏️</button>
         <button class="btn btn-ghost btn-sm btn-icon" title="Kopyala ve Düzenle" onclick="kopyalaTeklif('${t.id}')">📋</button>
         <button class="btn btn-danger btn-sm btn-icon" title="Sil" onclick="silConfirm('teklif','${t.id}','${escHtml(t.teklifNo)} teklifini silmek istediğinizden emin misiniz?')">🗑</button>
