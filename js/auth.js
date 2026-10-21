@@ -105,6 +105,7 @@ async function authVerifySession() {
 
 function authLogout() {
   authClearSession();
+  try { localStorage.removeItem('pocketbase_auth'); } catch (e) {} // Google SDK token'ı
   location.href = 'signin.html';
 }
 
@@ -201,12 +202,9 @@ async function loginWithGoogle() {
     const authData = await pb.collection('users').authWithOAuth2({ provider: 'google' });
     // Oturumu kendi formatımıza kaydet (db.js/auth.js ile uyumlu)
     authSaveSession(pb.authStore.token, authData.record);
-    // Yeni Google kullanıcısına plan atanmamışsa free yap
-    if (!authData.record.plan) {
-      try {
-        await pb.collection('users').update(authData.record.id, { plan: 'free' });
-      } catch (e) {}
-    }
+    // SDK token'ını ayrıca localStorage'da bırakma (çıkışta kalmasın)
+    pb.authStore.clear();
+    // Not: plan'ı client yazamaz; boş plan getUserPlan()'da 'free' sayılır, atama admin.html'den yapılır.
     location.href = 'index.html';
   } catch (e) {
     if (errEl) errEl.textContent = 'Google ile giriş başarısız: ' + (e.message || e);
