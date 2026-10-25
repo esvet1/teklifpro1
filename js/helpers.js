@@ -70,9 +70,11 @@ function generatePaylasimKodu() {
   return s;
 }
 
-function generateTeklifNo() {
+// Firma başına + yıl bazlı sayaç: PRF-{KOD}-{YIL}-{sıra}. firma yoksa eski PRF-{YIL}- biçimi.
+function generateTeklifNo(firma) {
   const y = new Date().getFullYear();
-  const prefix = `PRF-${y}-`;
+  const kod = firma && firma.kod ? firma.kod : null;
+  const prefix = kod ? `PRF-${kod}-${y}-` : `PRF-${y}-`;
   const max = state.teklifler.reduce((n, t) =>
     (t.teklifNo || '').startsWith(prefix) ? Math.max(n, parseInt(t.teklifNo.slice(prefix.length)) || 0) : n, 0);
   return prefix + String(max + 1).padStart(4, '0');
@@ -91,6 +93,13 @@ function formatTarih(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
   return d.toLocaleDateString('tr-TR');
+}
+
+function formatTarihSaat(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return '—';
+  return d.toLocaleString('tr-TR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
 }
 
 function fmt(n) {

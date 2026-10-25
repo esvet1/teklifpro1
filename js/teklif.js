@@ -703,7 +703,7 @@ function kaydetTeklif() {
 
   const teklif = {
     id:          isEdit ? state.wizard.editId : uid(),
-    teklifNo:    isEdit && mevcut ? mevcut.teklifNo : generateTeklifNo(),
+    teklifNo:    isEdit && mevcut ? mevcut.teklifNo : generateTeklifNo(firma),
     paylasimKodu: isEdit && mevcut && mevcut.paylasimKodu ? mevcut.paylasimKodu : generatePaylasimKodu(),
     musteriId:   state.wizard.musteriId,
     saticiFirmaId: state.wizard.saticiFirmaId || null,
@@ -721,6 +721,10 @@ function kaydetTeklif() {
     not:         state.wizard.not,
     saticiKisi:  state.wizard.saticiKisi || '',
     saticiPremium: (typeof isPremium === 'function') ? isPremium() : false,
+    durum:       isEdit && mevcut && mevcut.durum ? mevcut.durum : 'beklemede',
+    durumTarih:  isEdit && mevcut ? (mevcut.durumTarih || '') : '',
+    goruntulenme: isEdit && mevcut ? (mevcut.goruntulenme || 0) : 0,
+    sonGoruntuleme: isEdit && mevcut ? (mevcut.sonGoruntuleme || '') : '',
     createdAt:   isEdit && mevcut ? mevcut.createdAt : new Date().toISOString()
   };
 
@@ -755,32 +759,89 @@ function kopyalaPaylasimLinki(id) {
 // =========================================================
 // TEKLİF TABLOSU
 // =========================================================
+// Teklifin görünen durumu: beklemede ve geçerlilik tarihi geçmişse "süresi-doldu" olarak hesaplanır.
+function teklifDurumEtkin(t) {
+  const d = t.durum || 'beklemede';
+  if (d === 'beklemede' && teklifSuresiGecti(t)) return 'suresi-doldu';
+  return d;
+}
+function teklifSuresiGecti(t) {
+  if (!t.gecerlilik) return false;
+  const son = new Date(t.gecerlilik);
+  if (isNaN(son)) return false;
+  son.setHours(23, 59, 59, 999);
+  return Date.now() > son.getTime();
+}
+const DURUM_META = {
+  'beklemede':    { ad:'Beklemede',    cls:'badge-amber' },
+  'onaylandi':    { ad:'Onaylandı',    cls:'badge-green' },
+  'reddedildi':   { ad:'Reddedildi',   cls:'badge-red' },
+  'suresi-doldu': { ad:'Süresi doldu', cls:'badge-gray' },
+};
+function durumRozet(t) {
+  const meta = DURUM_META[teklifDurumEtkin(t)] || DURUM_META['beklemede'];
+  return `<span class="badge ${meta.cls}">${meta.ad}</span>`;
+}
+
+let teklifFiltreDurum = 'tumu';
+function setTeklifFiltre(d) {
+  teklifFiltreDurum = d;
+  document.querySelectorAll('#teklif-durum-filtre .durum-tab').forEach(b =>
+    b.classList.toggle('active', b.dataset.durum === d));
+  const q = (document.getElementById('search-teklif') || {}).value || '';
+  renderTeklifTable(q);
+}
+
+// Durumu değiştir (sadece teklif sahibi — tekliflerim kendi verisi). beklemede→onaylandi→reddedildi döngüsü.
+function teklifDurumDegistir(id, yeni) {
+  const t = state.teklifler.find(x => x.id === id);
+  if (!t) return;
+  t.durum = yeni;
+  t.durumTarih = new Date().toISOString();
+  saveState();
+  renderTeklifTable((document.getElementById('search-teklif') || {}).value || '');
+  if (typeof renderDashboard === 'function') renderDashboard();
+  toast('Durum güncellendi: ' + (DURUM_META[yeni] ? DURUM_META[yeni].ad : yeni));
+}
+
 function renderTeklifTable(q = '') {
   const tbody = document.getElementById('teklif-tbody');
   const query = q.toLowerCase().trim();
   const list = [...state.teklifler].reverse().filter(t => {
+    if (teklifFiltreDurum !== 'tumu' && teklifDurumEtkin(t) !== teklifFiltreDurum) return false;
     if (!query) return true;
     const m = getMusteriById(t.musteriId);
     return t.teklifNo.toLowerCase().includes(query) ||
            (m && musteriDisplayAd(m).toLowerCase().includes(query));
   });
   const countEl = document.getElementById('search-count-teklif');
-  if (countEl) countEl.textContent = query ? `${list.length} sonuç` : `${state.teklifler.length} teklif`;
+  if (countEl) countEl.textContent = (query || teklifFiltreDurum !== 'tumu') ? `${list.length} sonuç` : `${state.teklifler.length} teklif`;
 
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><span class="empty-icon">${query ? '🔍' : '📄'}</span><h3>${query ? 'Sonuç bulunamadı' : 'Henüz teklif yok'}</h3></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><span class="empty-icon">${query ? '🔍' : '📄'}</span><h3>${query ? 'Sonuç bulunamadı' : 'Kayıt yok'}</h3></div></td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(t => {
     const m = getMusteriById(t.musteriId);
+    const etkin = teklifDurumEtkin(t);
+    const gor = (t.goruntulenme || 0) > 0
+      ? `<span class="teklif-gor" title="${t.sonGoruntuleme ? 'Son: '+escHtml(formatTarihSaat(t.sonGoruntuleme)) : ''}">👁 ${t.goruntulenme}</span>`
+      : `<span class="teklif-gor teklif-gor-0" title="Henüz görüntülenmedi">👁 0</span>`;
     return `
     <tr>
-      <td>${escHtml(t.teklifNo)}</td>
+      <td>${escHtml(t.teklifNo)} ${gor}</td>
       <td>${m ? escHtml(musteriDisplayAd(m)) : '—'}</td>
       <td class="hide-mobile">${formatTarih(t.createdAt)}</td>
       <td class="hide-mobile">${escHtml(t.gecerlilik) || '—'}</td>
       <td style="font-weight:600;color:var(--accent)">${formatTutar(t.toplamKdvli, t.currency)}</td>
-      <td class="hide-mobile"><span class="badge badge-green">Oluşturuldu</span></td>
+      <td class="hide-mobile durum-cell">
+        ${durumRozet(t)}
+        <select class="durum-select" onchange="teklifDurumDegistir('${escHtml(t.id)}', this.value)" title="Durumu değiştir">
+          <option value="beklemede"${etkin==='beklemede'?' selected':''}>Beklemede</option>
+          <option value="onaylandi"${etkin==='onaylandi'?' selected':''}>Onaylandı</option>
+          <option value="reddedildi"${etkin==='reddedildi'?' selected':''}>Reddedildi</option>
+        </select>
+      </td>
       <td class="td-actions">
         <button class="btn btn-ghost btn-sm btn-icon" title="Görüntüle" onclick="goruntuleTeklif('${escHtml(t.id)}')">👁</button>
         <button class="btn btn-primary btn-sm btn-icon" title="PDF İndir" onclick="goruntuleTeklifPdf('${escHtml(t.id)}')">⬇</button>

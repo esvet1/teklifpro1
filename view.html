@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Proforma Teklif · teklif.pro</title>
-<link rel="stylesheet" href="styles.css?v=4">
+<link rel="stylesheet" href="styles.css?v=6">
 <style>
   body { background:#f1f5f9; }
   .view-wrap { max-width:900px; margin:0 auto; padding:24px 16px 64px; }
@@ -25,9 +25,9 @@
 </div>
 <div id="print-root"></div>
 
-<script src="js/helpers.js"></script>
-<script src="js/security.js"></script>
-<script src="js/proforma.js"></script>
+<script src="js/helpers.js?v=6"></script>
+<script src="js/security.js?v=6"></script>
+<script src="js/proforma.js?v=6"></script>
 <script>
 'use strict';
 // view.html giriş yapmadan çalışır — veri teklife gömülü snapshot'lardan okunur.
@@ -67,14 +67,28 @@ async function loadTeklif() {
     ['kalemler','saticiFirmaSnapshot','musteriSnapshot'].forEach(k => {
       if (typeof rec[k] === 'string') { try { rec[k] = JSON.parse(rec[k]); } catch(e){} }
     });
+    const pbId = rec.id; // PocketBase kayıt id'si (PATCH için) — altta localId ile ezilecek
     rec.id = rec.localId || rec.id;
     state.teklifler = [rec];
     state.currentTeklifId = rec.id;
     box.innerHTML = renderProforma(rec.id);
     document.getElementById('pdf-btn').style.display = '';
+    // Görüntülenme sayacı +1 (best-effort; kural sadece kod eşleşen kayda bu iki alana yazıma izin verir)
+    bumpGoruntulenme(pbId, safeKod, rec.goruntulenme || 0);
   } catch (e) {
     box.innerHTML = '<div class="view-msg">Teklif yüklenemedi. Daha sonra tekrar deneyin.</div>';
   }
+}
+
+async function bumpGoruntulenme(pbId, safeKod, mevcut) {
+  try {
+    await fetch(PB + '/api/collections/teklifler/records/' + encodeURIComponent(pbId) +
+                '?kod=' + encodeURIComponent(safeKod), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ goruntulenme: (mevcut || 0) + 1, sonGoruntuleme: new Date().toISOString() }),
+    });
+  } catch (e) { /* sessiz: sayaç kritik değil */ }
 }
 loadTeklif();
 </script>

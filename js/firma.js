@@ -12,6 +12,16 @@ function getFirmaById(id) {
   return (state.firmalar || []).find(f => f.id === id);
 }
 
+// Teklif no kodu: elle girilen varsa onu, yoksa firma adının harflerinden ilk 3'ü (TR karakterler sadeleştirilir).
+function firmaKodNormalize(raw, ad) {
+  const clean = s => (s || '').toLocaleUpperCase('tr')
+    .replace(/İ/g,'I').replace(/Ş/g,'S').replace(/Ğ/g,'G').replace(/Ü/g,'U').replace(/Ö/g,'O').replace(/Ç/g,'C')
+    .replace(/[^A-Z0-9]/g,'');
+  const girilen = clean(raw).slice(0, 6);
+  if (girilen) return girilen;
+  return (clean(ad).slice(0, 3) || 'PRF');
+}
+
 // Firma adını göster (boşsa placeholder)
 function firmaDisplayAd(f) {
   return f && f.ad ? f.ad : '(İsimsiz firma)';
@@ -35,6 +45,7 @@ function renderFirmaList() {
       <div class="firma-card-head">
         <div class="firma-card-ad">
           ${escHtml(firmaDisplayAd(f))}
+          ${f.kod ? `<span class="firma-badge" title="Teklif no kodu">${escHtml(f.kod)}</span>` : ''}
           ${f.varsayilan ? '<span class="firma-badge">Varsayılan</span>' : ''}
         </div>
         <div class="firma-card-actions">
@@ -60,14 +71,14 @@ function openFirmaModal(id = null) {
     const f = getFirmaById(id);
     if (!f) return;
     document.getElementById('firma-modal-title').textContent = 'Firma Düzenle';
-    set('f-ad', f.ad || ''); set('f-vergi', f.vergi || ''); set('f-adres', f.adres || '');
+    set('f-ad', f.ad || ''); set('f-kod', f.kod || ''); set('f-vergi', f.vergi || ''); set('f-adres', f.adres || '');
     set('f-tel', f.tel || ''); set('f-email', f.email || ''); set('f-web', f.web || '');
     set('f-banka', f.banka || ''); set('f-iban-try', f.ibanTry || '');
     set('f-iban-usd', f.ibanUsd || ''); set('f-iban-eur', f.ibanEur || '');
     set('f-logo', f.logo || '');
   } else {
     document.getElementById('firma-modal-title').textContent = 'Yeni Firma';
-    ['f-ad','f-vergi','f-adres','f-tel','f-email','f-web','f-banka','f-iban-try','f-iban-usd','f-iban-eur','f-logo']
+    ['f-ad','f-kod','f-vergi','f-adres','f-tel','f-email','f-web','f-banka','f-iban-try','f-iban-usd','f-iban-eur','f-logo']
       .forEach(k => set(k, ''));
   }
   // Logo alanı: free planda kilitli (Premium özelliği)
@@ -89,6 +100,7 @@ function kaydetFirma() {
 
   const veri = {
     ad,
+    kod:     firmaKodNormalize(document.getElementById('f-kod').value, ad),
     vergi:   document.getElementById('f-vergi').value.trim(),
     adres:   document.getElementById('f-adres').value.trim(),
     tel:     document.getElementById('f-tel').value.trim(),

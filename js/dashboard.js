@@ -23,8 +23,27 @@ function resetDashboardFilter() {
   renderDashboard();
 }
 
+// Beklemede teklifler + yakında süresi dolacaklar için panel hatırlatması (teklif.js helper'larını kullanır)
+function renderDurumHatirlatma() {
+  const el = document.getElementById('db-hatirlatma');
+  if (!el || typeof teklifDurumEtkin !== 'function') return;
+  const bekleyen = state.teklifler.filter(t => teklifDurumEtkin(t) === 'beklemede');
+  const yakinda = bekleyen.filter(t => {
+    if (!t.gecerlilik) return false;
+    const son = new Date(t.gecerlilik); if (isNaN(son)) return false;
+    const gun = (son.getTime() - Date.now()) / 86400000;
+    return gun >= 0 && gun <= 3;
+  });
+  if (!bekleyen.length) { el.style.display = 'none'; return; }
+  let msg = `⏳ <strong>${bekleyen.length}</strong> teklif beklemede`;
+  if (yakinda.length) msg += ` · <strong>${yakinda.length}</strong> tanesinin süresi 3 gün içinde doluyor`;
+  el.innerHTML = msg + ' <span class="db-hatirlatma-link">Tekliflerim →</span>';
+  el.style.display = '';
+}
+
 function renderDashboard() {
   populateDashboardYillar();
+  renderDurumHatirlatma();
 
   const q       = (document.getElementById('db-search')?.value || '').toLowerCase().trim();
   const yilVal  = document.getElementById('db-yil')?.value  || '';

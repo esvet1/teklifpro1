@@ -1440,8 +1440,7 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 /* ── Bottom nav sadece ≤640px göster ── */
 @media (max-width: 640px) {
   .bottom-nav { display: block; }
-  /* Sidebar footer gizle mobilde */
-  .sidebar-footer { display: none; }
+  /* Mobilde footer görünür kalsın (hamburger drawer'ında) — rozet/plan burada görünür */
 }
 
 /* =========================================================
@@ -2627,6 +2626,33 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 }
 .plan-free { background: var(--surface3); color: var(--text-muted); }
 .plan-premium { background: var(--accent-glow); color: var(--accent); }
+
+/* ── Teklif durumu (v1.3) ── */
+.durum-filtre { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
+.durum-tab {
+  padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text-muted); font-size: 0.8rem;
+  font-weight: 600; cursor: pointer; transition: all .15s;
+}
+.durum-tab:hover { color: var(--text); }
+.durum-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.badge-red   { background: #fee2e2; color: #991b1b; }
+.badge-gray  { background: var(--surface3); color: var(--text-muted); }
+.durum-cell { white-space: nowrap; }
+.durum-select {
+  margin-left: 6px; font-size: 0.72rem; padding: 2px 4px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface2); color: var(--text); cursor: pointer;
+}
+.teklif-gor { font-size: 0.7rem; color: var(--text-muted); margin-left: 6px; white-space: nowrap; }
+.teklif-gor-0 { opacity: 0.5; }
+.db-hatirlatma {
+  background: #fef3c7; color: #92400e; border: 1px solid #fde68a;
+  border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px;
+  font-size: 0.9rem; cursor: pointer;
+}
+.db-hatirlatma-link { font-weight: 700; margin-left: 6px; }
 
 /* Google OAuth butonu + ayırıcı (signin/signup) */
 .auth-or {
