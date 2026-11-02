@@ -80,3 +80,27 @@ python3 -m http.server 3000
 ```
 
 Sonra tarayıcıda `http://localhost:3000` adresini aç.
+
+## PocketBase — müşteri onayı (v1.6)
+
+`teklifler` koleksiyonuna iki alan ekleyin: `musteriYanit` (Text) ve `musteriYanitTarih` (Text).
+Ardından **Update rule**'u aşağıdakiyle değiştirin. Kural, giriş yapmamış birinin yalnızca doğru
+paylaşım koduyla, yalnızca görüntülenme ve yanıt alanlarını yazmasına izin verir; yanıt bir kez verilir.
+
+```
+(@request.auth.id != "" && user = @request.auth.id && (@request.body.user:isset = false || @request.body.user = @request.auth.id))
+||
+(@request.auth.id = "" && @request.query.kod != "" && paylasimKodu = @request.query.kod
+ && @request.body.user:isset = false && @request.body.localId:isset = false && @request.body.teklifNo:isset = false
+ && @request.body.musteriId:isset = false && @request.body.saticiFirmaId:isset = false && @request.body.currency:isset = false
+ && @request.body.kaynakPara:isset = false && @request.body.kur:isset = false && @request.body.kalemler:isset = false
+ && @request.body.kdv:isset = false && @request.body.kdvTutar:isset = false && @request.body.araToplam:isset = false
+ && @request.body.toplamKdvli:isset = false && @request.body.gecerlilik:isset = false && @request.body.not:isset = false
+ && @request.body.paylasimKodu:isset = false && @request.body.saticiFirmaSnapshot:isset = false
+ && @request.body.musteriSnapshot:isset = false && @request.body.saticiPremium:isset = false
+ && @request.body.saticiKisi:isset = false && @request.body.durum:isset = false && @request.body.durumTarih:isset = false
+ && (@request.body.musteriYanit:isset = false || (musteriYanit = "" && (@request.body.musteriYanit = "onaylandi" || @request.body.musteriYanit = "reddedildi")))
+ && (@request.body.musteriYanitTarih:isset = false || musteriYanit = ""))
+```
+
+> Teklife yeni bir alan eklenirse buraya da `@request.body.<alan>:isset = false` eklenmelidir.

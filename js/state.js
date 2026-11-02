@@ -7,6 +7,7 @@ let state = {
   musteriler: [],
   urunler: [],
   teklifler: [],
+  notBloklari: [], // hazır teklif notu metinleri (ödeme, teslim vb.)
   ozelParalar: [], // kullanıcının eklediği özel para birimi kodları, örn ['CFA','GBP']
   firmalar: [],    // çoklu satıcı firma (her biri: {id, ad, vergi, adres, ..., varsayilan})
   firma: {
@@ -47,6 +48,7 @@ function loadState() {
       state.teklifler  = loaded.teklifler  || [];
       state.firma      = loaded.firma      || state.firma;
       state.ozelParalar = loaded.ozelParalar || [];
+      state.notBloklari = loaded.notBloklari || [];
       state.firmalar   = loaded.firmalar   || [];
 
       // Geriye dönük: eski tek firma varsa ve firmalar boşsa, taşı

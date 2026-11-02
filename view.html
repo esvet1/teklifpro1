@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Proforma Teklif · teklif.pro</title>
-<link rel="stylesheet" href="styles.css?v=6">
+<link rel="stylesheet" href="styles.css?v=9">
 <style>
   body { background:#f1f5f9; }
   .view-wrap { max-width:900px; margin:0 auto; padding:24px 16px 64px; }
@@ -12,6 +12,12 @@
   .view-brand { font-weight:700; color:#0f172a; }
   .view-card { background:#fff; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); padding:8px; }
   .view-msg { text-align:center; padding:64px 16px; color:#64748b; }
+  .view-yanit { margin-top:16px; background:#fff; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); padding:20px; text-align:center; }
+  .view-yanit p { margin:0 0 14px; color:#334155; }
+  .view-yanit-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .view-yanit-btns .btn { min-width:150px; justify-content:center; }
+  .view-yanit-sonuc { font-weight:600; }
+  @media print { .view-yanit { display:none; } }
   @media print { .view-bar, body { background:#fff; } .view-bar { display:none; } .view-card { box-shadow:none; padding:0; } }
 </style>
 </head>
@@ -22,12 +28,13 @@
     <button id="pdf-btn" class="btn btn-primary" style="display:none" onclick="teklifPDF()">⬇ PDF İndir</button>
   </div>
   <div id="view-content" class="view-card"><div class="view-msg">Teklif yükleniyor…</div></div>
+  <div id="view-yanit" class="view-yanit" style="display:none"></div>
 </div>
 <div id="print-root"></div>
 
-<script src="js/helpers.js?v=6"></script>
-<script src="js/security.js?v=6"></script>
-<script src="js/proforma.js?v=6"></script>
+<script src="js/helpers.js?v=9"></script>
+<script src="js/security.js?v=9"></script>
+<script src="js/proforma.js?v=9"></script>
 <script>
 'use strict';
 // view.html giriş yapmadan çalışır — veri teklife gömülü snapshot'lardan okunur.
@@ -75,6 +82,7 @@ async function loadTeklif() {
     document.getElementById('pdf-btn').style.display = '';
     // Görüntülenme sayacı +1 (best-effort; kural sadece kod eşleşen kayda bu iki alana yazıma izin verir)
     bumpGoruntulenme(pbId, safeKod, rec.goruntulenme || 0);
+    renderYanit(rec, pbId, safeKod);
   } catch (e) {
     box.innerHTML = '<div class="view-msg">Teklif yüklenemedi. Daha sonra tekrar deneyin.</div>';
   }
@@ -89,6 +97,51 @@ async function bumpGoruntulenme(pbId, safeKod, mevcut) {
       body: JSON.stringify({ goruntulenme: (mevcut || 0) + 1, sonGoruntuleme: new Date().toISOString() }),
     });
   } catch (e) { /* sessiz: sayaç kritik değil */ }
+}
+// Müşteri yanıtı: onay / ret (bir kez verilir; kural boş musteriYanit'i şart koşar)
+function suresiGecti(t) {
+  if (!t.gecerlilik) return false;
+  const son = new Date(t.gecerlilik);
+  if (isNaN(son)) return false;
+  son.setHours(23, 59, 59, 999);
+  return Date.now() > son.getTime();
+}
+function renderYanit(rec, pbId, safeKod) {
+  const box = document.getElementById('view-yanit');
+  box.style.display = '';
+  if (rec.musteriYanit) {
+    const ad = rec.musteriYanit === 'onaylandi' ? '✅ Bu teklifi onayladınız.' : '❌ Bu teklifi reddettiniz.';
+    box.innerHTML = `<p class="view-yanit-sonuc">${ad}</p><p style="margin:0;font-size:.85rem;color:#64748b">${escHtml(formatTarihSaat(rec.musteriYanitTarih || ''))}</p>`;
+    return;
+  }
+  if (suresiGecti(rec)) {
+    box.innerHTML = '<p style="margin:0">Bu teklifin geçerlilik süresi dolmuştur. Güncel teklif için satıcıyla iletişime geçin.</p>';
+    return;
+  }
+  box.innerHTML = `<p>Teklifi inceledikten sonra yanıtınızı iletebilirsiniz.</p>
+    <div class="view-yanit-btns">
+      <button class="btn btn-primary" onclick="yanitVer('onaylandi')">✓ Teklifi Onayla</button>
+      <button class="btn btn-ghost" onclick="yanitVer('reddedildi')">Reddet</button>
+    </div>`;
+  window.yanitVer = async (yanit) => {
+    const soru = yanit === 'onaylandi' ? 'Teklifi onaylamak istediğinize emin misiniz?' : 'Teklifi reddetmek istediğinize emin misiniz?';
+    if (!confirm(soru)) return;
+    box.querySelectorAll('button').forEach(b => b.disabled = true);
+    const tarih = new Date().toISOString();
+    try {
+      const res = await fetch(PB + '/api/collections/teklifler/records/' + encodeURIComponent(pbId) +
+                              '?kod=' + encodeURIComponent(safeKod), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ musteriYanit: yanit, musteriYanitTarih: tarih }),
+      });
+      if (!res.ok) throw new Error(res.status);
+      renderYanit({ ...rec, musteriYanit: yanit, musteriYanitTarih: tarih }, pbId, safeKod);
+    } catch (e) {
+      box.querySelectorAll('button').forEach(b => b.disabled = false);
+      alert('Yanıtınız kaydedilemedi. Lütfen daha sonra tekrar deneyin veya satıcıyla iletişime geçin.');
+    }
+  };
 }
 loadTeklif();
 </script>

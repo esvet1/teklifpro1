@@ -95,6 +95,7 @@ function _applyWizardLoad(t, mode) {
   state.wizard = {
     step: 1,
     editId:     mode === 'edit' ? t.id : null,
+    kaynakTeklifId: mode === 'copy' ? t.id : null,
     musteriId:  t.musteriId,
     saticiFirmaId: t.saticiFirmaId || (getVarsayilanFirma() ? getVarsayilanFirma().id : null),
     secilenUrunler,
@@ -176,6 +177,10 @@ function wizardNext(step) {
   wizardGotoStep(step);
 }
 
+const MUSTERI_SAYFA_BOYU = 3;
+let musteriSayfa = 0;
+function musteriSayfaGit(d) { musteriSayfa += d; renderMusteriSelectGrid(); }
+
 function renderMusteriSelectGrid() {
   const grid  = document.getElementById('musteri-select-grid');
   const q     = (document.getElementById('w-musteri-search')?.value || '').trim().toLowerCase();
@@ -211,7 +216,16 @@ function renderMusteriSelectGrid() {
     return;
   }
 
-  grid.innerHTML = `<div class="wiz-list">${list.map(m => {
+  const sayfaSay = Math.ceil(list.length / MUSTERI_SAYFA_BOYU);
+  musteriSayfa = Math.min(Math.max(musteriSayfa, 0), sayfaSay - 1);
+  const sayfa = list.slice(musteriSayfa * MUSTERI_SAYFA_BOYU, (musteriSayfa + 1) * MUSTERI_SAYFA_BOYU);
+  const pager = sayfaSay > 1 ? `<div class="wiz-pager">
+      <button class="btn btn-ghost btn-sm" onclick="musteriSayfaGit(-1)" ${musteriSayfa === 0 ? 'disabled' : ''} aria-label="Önceki sayfa">‹ Önceki</button>
+      <span>${musteriSayfa + 1} / ${sayfaSay}</span>
+      <button class="btn btn-ghost btn-sm" onclick="musteriSayfaGit(1)" ${musteriSayfa >= sayfaSay - 1 ? 'disabled' : ''} aria-label="Sonraki sayfa">Sonraki ›</button>
+    </div>` : '';
+
+  grid.innerHTML = `<div class="wiz-list">${sayfa.map(m => {
     const ad  = musteriDisplayAd(m);
     const init = ad.trim().charAt(0).toUpperCase();
     const sel  = state.wizard.musteriId === m.id;
@@ -226,7 +240,7 @@ function renderMusteriSelectGrid() {
         <span class="badge ${m.tip==='kurumsal'?'badge-blue':'badge-gray'}" style="font-size:0.62rem">${m.tip==='kurumsal'?'Kurumsal':'Bireysel'}</span>
       </div>
     </div>`;
-  }).join('')}</div>`;
+  }).join('')}</div>${pager}`;
 
   renderSeciliMusteriBand();
 }
@@ -334,6 +348,21 @@ function updateKaynakPara() {
   state.wizard.cokluKaynak = farkli.length > 1;
 }
 
+// Seçili müşteriye bu ürün için verilen son fiyat (teklif para biriminde, PDF'teki haliyle)
+function sonFiyat(musteriId, urunId) {
+  let son = null;
+  state.teklifler.forEach(t => {
+    if (t.musteriId !== musteriId || t.id === state.wizard.editId) return;
+    const k = (t.kalemler || []).find(x => x.urunId === urunId);
+    if (k && (!son || (t.createdAt || '') > son.tarih)) son = { fiyat: k.birimFiyat, para: t.currency, tarih: t.createdAt || '', no: t.teklifNo };
+  });
+  return son;
+}
+function sonFiyatHtml(urunId) {
+  const s = state.wizard.musteriId && sonFiyat(state.wizard.musteriId, urunId);
+  return s ? `<div class="kalem-son" title="${escHtml(s.no || '')}">Son verilen: ${formatTutar(s.fiyat, s.para)} · ${formatTarih(s.tarih)}</div>` : '';
+}
+
 function renderKalemler() {
   const wrap = document.getElementById('kalemler-wrap');
   const keys = Object.keys(state.wizard.secilenUrunler);
@@ -351,7 +380,7 @@ function renderKalemler() {
     const ara = calcAra(k);
     rows += `
     <tr id="kalem-row-${uid}">
-      <td style="color:var(--text);font-weight:600;font-family:var(--font-body)">${escHtml(u.ad)}</td>
+      <td style="color:var(--text);font-weight:600;font-family:var(--font-body)">${escHtml(u.ad)}${sonFiyatHtml(uid)}</td>
       <td>
         <input class="qty-input" type="number"
           id="qty-${uid}"
@@ -630,7 +659,41 @@ function onKurChange() {
   updateKalemTotals(null);
 }
 
+// Hazır metin blokları (ödeme şartı, teslim süresi vb.) — ayarlar'da 'notBloklari' olarak saklanır
+function renderNotBloklari() {
+  const sel = document.getElementById('w-not-blok');
+  if (!sel) return;
+  const list = state.notBloklari || [];
+  sel.innerHTML = `<option value="">${list.length ? '＋ Hazır metin ekle…' : 'Henüz hazır metin yok'}</option>` +
+    list.map((b, i) => `<option value="${i}">${escHtml(b.length > 60 ? b.slice(0, 60) + '…' : b)}</option>`).join('') +
+    (list.length ? '<option value="sil">🗑 Hazır metin sil…</option>' : '');
+}
+function notBlokEkle(sel) {
+  const v = sel.value; sel.value = '';
+  const list = state.notBloklari || [];
+  if (v === 'sil') {
+    const no = parseInt(prompt('Silinecek metnin sıra numarası (1-' + list.length + '):\n' + list.map((b, i) => `${i + 1}. ${b.slice(0, 50)}`).join('\n')));
+    if (no >= 1 && no <= list.length) { list.splice(no - 1, 1); saveState(); renderNotBloklari(); toast('Hazır metin silindi.'); }
+    return;
+  }
+  if (v === '' || !list[v]) return;
+  const ta = document.getElementById('w-not');
+  ta.value = ta.value.trim() ? ta.value.trimEnd() + '\n' + list[v] : list[v];
+}
+function notBlokKaydet() {
+  const ta = document.getElementById('w-not');
+  const metin = (ta.value || '').trim();
+  if (!metin) { toast('Önce not alanına metni yazın.', 'error'); return; }
+  state.notBloklari = state.notBloklari || [];
+  if (state.notBloklari.includes(metin)) { toast('Bu metin zaten kayıtlı.'); return; }
+  state.notBloklari.push(metin);
+  saveState();
+  renderNotBloklari();
+  toast('✓ Hazır metin kaydedildi.');
+}
+
 function renderWizardOzet() {
+  renderNotBloklari();
   const m = getMusteriById(state.wizard.musteriId);
   // Wizard state'indeki güncel değerleri al
   state.wizard.kdv        = parseInt(document.getElementById('w-kdv')?.value) || state.wizard.kdv;
@@ -692,6 +755,9 @@ function kaydetTeklif() {
   const { araToplam, kdvTutar, genel } = calcTotals();
 
   const isEdit = !!state.wizard.editId;
+  // Aynı müşteriye kopyalanan teklif yeni numara değil revizyon olur
+  const kopyaKaynak = !isEdit && state.wizard.kaynakTeklifId ? state.teklifler.find(x => x.id === state.wizard.kaynakTeklifId) : null;
+  const revizyonKaynak = kopyaKaynak && kopyaKaynak.musteriId === state.wizard.musteriId ? kopyaKaynak : null;
   const mevcut = isEdit ? state.teklifler.find(x => x.id === state.wizard.editId) : null;
 
   // Satıcı firmayı teklife göm (view.html giriş yapmadan firmalar'a erişemez)
@@ -711,7 +777,7 @@ function kaydetTeklif() {
 
   const teklif = {
     id:          isEdit ? state.wizard.editId : uid(),
-    teklifNo:    isEdit && mevcut ? mevcut.teklifNo : generateTeklifNo(firma),
+    teklifNo:    isEdit && mevcut ? mevcut.teklifNo : (revizyonKaynak ? revizyonNo(revizyonKaynak.teklifNo) : generateTeklifNo(firma)),
     paylasimKodu: isEdit && mevcut && mevcut.paylasimKodu ? mevcut.paylasimKodu : generatePaylasimKodu(),
     musteriId:   state.wizard.musteriId,
     saticiFirmaId: state.wizard.saticiFirmaId || null,
@@ -751,11 +817,25 @@ function kaydetTeklif() {
 }
 
 // Paylaşım linkini panoya kopyala (kod yoksa eski teklife üret + kaydet)
+function paylasimUrl(t) {
+  if (!t.paylasimKodu) { t.paylasimKodu = generatePaylasimKodu(); saveState(); }
+  return location.origin + '/view.html?kod=' + t.paylasimKodu;
+}
+
+// WhatsApp: hazır mesaj + online teklif linki (numara seçimi WhatsApp'ta yapılır)
+function whatsappGonder(id) {
+  const t = state.teklifler.find(x => x.id === id);
+  if (!t) return;
+  const m = getMusteriById(t.musteriId);
+  const selam = m ? `Merhaba ${musteriDisplayAd(m)},` : 'Merhaba,';
+  const metin = `${selam}\n${t.teklifNo} numaralı teklifimizi aşağıdaki linkten inceleyip onaylayabilirsiniz:\n${paylasimUrl(t)}`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(metin), '_blank', 'noopener');
+}
+
 function kopyalaPaylasimLinki(id) {
   const t = state.teklifler.find(x => x.id === id);
   if (!t) return;
-  if (!t.paylasimKodu) { t.paylasimKodu = generatePaylasimKodu(); saveState(); }
-  const url = location.origin + '/view.html?kod=' + t.paylasimKodu;
+  const url = paylasimUrl(t);
   const done = () => toast('✓ Paylaşım linki kopyalandı');
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url).then(done).catch(() => prompt('Linki kopyalayın:', url));
@@ -769,7 +849,8 @@ function kopyalaPaylasimLinki(id) {
 // =========================================================
 // Teklifin görünen durumu: beklemede ve geçerlilik tarihi geçmişse "süresi-doldu" olarak hesaplanır.
 function teklifDurumEtkin(t) {
-  const d = t.durum || 'beklemede';
+  // Müşterinin linkten verdiği yanıt, sahibin ondan önceki elle seçiminin önüne geçer
+  const d = (t.musteriYanit && (!t.durumTarih || t.musteriYanitTarih > t.durumTarih)) ? t.musteriYanit : (t.durum || 'beklemede');
   if (d === 'beklemede' && teklifSuresiGecti(t)) return 'suresi-doldu';
   return d;
 }
@@ -843,7 +924,7 @@ function renderTeklifTable(q = '') {
       <td class="hide-mobile">${escHtml(t.gecerlilik) || '—'}</td>
       <td style="font-weight:600;color:var(--accent)">${formatTutar(t.toplamKdvli, t.currency)}</td>
       <td class="durum-cell">
-        ${durumRozet(t)}
+        ${durumRozet(t)}${t.musteriYanit ? `<span class="musteri-yanit" title="Müşteri linkten yanıtladı: ${escHtml(formatTarihSaat(t.musteriYanitTarih || ''))}">👤</span>` : ''}
         <select class="durum-select" onchange="teklifDurumDegistir('${escHtml(t.id)}', this.value)" title="Durumu değiştir">
           <option value="beklemede"${etkin==='beklemede'?' selected':''}>Beklemede</option>
           <option value="onaylandi"${etkin==='onaylandi'?' selected':''}>Onaylandı</option>
@@ -853,6 +934,7 @@ function renderTeklifTable(q = '') {
       <td class="td-actions">
         <button class="btn btn-ghost btn-sm btn-icon" title="Görüntüle" onclick="goruntuleTeklif('${escHtml(t.id)}')">👁</button>
         <button class="btn btn-primary btn-sm btn-icon" title="PDF İndir" onclick="goruntuleTeklifPdf('${escHtml(t.id)}')">⬇</button>
+        <button class="btn btn-ghost btn-sm btn-icon" title="WhatsApp ile gönder" onclick="whatsappGonder('${escHtml(t.id)}')">💬</button>
         <button class="btn btn-ghost btn-sm btn-icon" title="Paylaşım linkini kopyala" onclick="kopyalaPaylasimLinki('${escHtml(t.id)}')">🔗</button>
         <button class="btn btn-ghost btn-sm btn-icon" title="Düzenle" onclick="duzenleTeklif('${escHtml(t.id)}')">✏️</button>
         <button class="btn btn-ghost btn-sm btn-icon" title="Kopyala ve Düzenle" onclick="kopyalaTeklif('${escHtml(t.id)}')">📋</button>

@@ -32,7 +32,7 @@ const PB_IDMAP = {
 };
 
 // ayarlar tablosunda 'ozelParalar' kaydının PB id'si
-let PB_AYAR_OZELPARA_RECID = null;
+const PB_AYAR_RECID = {}; // anahtar → PB kayıt id (ozelParalar, notBloklari)
 
 // ---------------------------------------------------------
 // Düşük seviyeli REST
@@ -113,6 +113,8 @@ function objToPbBody(obj) {
   body.localId = obj.id;
   delete body.id;
   delete body.createdAt;
+  // Bu alanları yalnızca müşteri (view.html) yazar; sahibin eski kopyası üzerine yazmasın
+  ['goruntulenme', 'sonGoruntuleme', 'musteriYanit', 'musteriYanitTarih'].forEach(k => delete body[k]);
   const uid = getCurrentUserId();
   if (uid) body.user = uid;
   return body;
@@ -155,13 +157,14 @@ async function dbBootstrap() {
     state.firmalar   = firmalar.map(r => { PB_IDMAP.firmalar[r.localId] = r.id; return pbRecToObj(r); });
 
     // ayarlar: ozelParalar
-    const ozelKaydi = ayarlar.find(a => a.anahtar === 'ozelParalar');
-    if (ozelKaydi) {
-      PB_AYAR_OZELPARA_RECID = ozelKaydi.id;
-      let d = ozelKaydi.deger;
+    ['ozelParalar', 'notBloklari'].forEach(anahtar => {
+      const kayit = ayarlar.find(a => a.anahtar === anahtar);
+      if (!kayit) return;
+      PB_AYAR_RECID[anahtar] = kayit.id;
+      let d = kayit.deger;
       if (typeof d === 'string') { try { d = JSON.parse(d); } catch(e){ d = []; } }
-      state.ozelParalar = Array.isArray(d) ? d : [];
-    }
+      state[anahtar] = Array.isArray(d) ? d : [];
+    });
 
     console.info('[db] PocketBase yüklendi:',
       state.musteriler.length, 'müşteri,', state.urunler.length, 'ürün,',
@@ -211,18 +214,18 @@ async function _syncCollection(collection, list, opts = {}) {
   }
 }
 
-async function _syncOzelParalar() {
-  const body = { anahtar: 'ozelParalar', deger: state.ozelParalar || [] };
+async function _syncAyar(anahtar) {
+  const body = { anahtar, deger: state[anahtar] || [] };
   const uid = getCurrentUserId();
   if (uid) body.user = uid;
   try {
-    if (PB_AYAR_OZELPARA_RECID) {
-      await pbUpdate('ayarlar', PB_AYAR_OZELPARA_RECID, body);
+    if (PB_AYAR_RECID[anahtar]) {
+      await pbUpdate('ayarlar', PB_AYAR_RECID[anahtar], body);
     } else {
       const rec = await pbCreate('ayarlar', body);
-      PB_AYAR_OZELPARA_RECID = rec.id;
+      PB_AYAR_RECID[anahtar] = rec.id;
     }
-  } catch(e){ console.warn('[db] ozelPara sync', e.message); }
+  } catch(e){ console.warn('[db] ayar sync', anahtar, e.message); }
 }
 
 async function _syncAll() {
@@ -231,7 +234,8 @@ async function _syncAll() {
   await _syncCollection('urunler', state.urunler);
   await _syncCollection('teklifler', state.teklifler);
   await _syncCollection('firmalar', state.firmalar);
-  await _syncOzelParalar();
+  await _syncAyar('ozelParalar');
+  await _syncAyar('notBloklari');
 }
 
 // ---------------------------------------------------------

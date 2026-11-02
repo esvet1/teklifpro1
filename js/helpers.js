@@ -80,6 +80,16 @@ function generateTeklifNo(firma) {
   return prefix + String(max + 1).padStart(4, '0');
 }
 
+// Aynı müşteriye kopyalanan teklif: PRF-...-0014 → PRF-...-0014-R1, -R2 …
+function revizyonNo(kaynakNo) {
+  const base = String(kaynakNo || '').replace(/-R\d+$/, '');
+  const n = state.teklifler.reduce((m, t) => {
+    const no = t.teklifNo || '', x = no.match(/-R(\d+)$/);
+    return x && no.replace(/-R\d+$/, '') === base ? Math.max(m, +x[1]) : m;
+  }, 0);
+  return `${base}-R${n + 1}`;
+}
+
 function getMusteriById(id) {
   return state.musteriler.find(m => m.id === id);
 }
