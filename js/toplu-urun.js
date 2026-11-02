@@ -36,25 +36,22 @@ function resetToplu() {
 }
 
 function indir_sablon() {
-  // BOM + CSV header + 3 örnek satır
-  const bom = '\uFEFF';
-  const header = TOPLU_KOLONLAR.join(';');
-  const ornekler = [
-    'Örnek Ürün A;SKU-001;Ürün açıklaması;Adet;150.00;TRY;',
-    'Örnek Ürün B;SKU-002;İkinci ürün;Kg;89.90;USD;https://example.com/img.jpg',
-    'Örnek Ürün C;;Açıklama opsiyonel;Paket;250.00;EUR;',
+  // Gerçek .xlsx: telefonda da (Excel / Google Sheets / Numbers) başlıklar ayrı sütunlarda açılır
+  const rows = [
+    TOPLU_KOLONLAR,
+    ['Örnek Ürün A', 'SKU-001', 'Ürün açıklaması', 'Adet', 150, 'TRY', ''],
+    ['Örnek Ürün B', 'SKU-002', 'İkinci ürün', 'Kg', 89.9, 'USD', 'https://example.com/img.jpg'],
+    ['Örnek Ürün C', '', 'Açıklama opsiyonel', 'Paket', 250, 'EUR', ''],
   ];
-  const csv = bom + header + '\n' + ornekler.join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
+  const url = URL.createObjectURL(xlsxBlob(rows, [28, 14, 30, 10, 12, 12, 34]));
+  const a   = document.createElement('a');
   a.href     = url;
-  a.download = 'urun_sablon.csv';
+  a.download = 'urun_sablon.xlsx';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  toast('📥 Şablon indirildi. Excel ile açıp doldurun.');
+  setTimeout(() => URL.revokeObjectURL(url), 1000); // mobil tarayıcılar indirmeyi gecikmeli başlatır
+  toast('📥 Şablon indirildi. Excel ile açıp her satıra bir ürün yazın.');
 }
 
 function onTopluFileSelect(input) {
@@ -64,6 +61,12 @@ function onTopluFileSelect(input) {
 
 function parseTopluFile(file) {
   if (file.size > 5 * 1024 * 1024) { toast('Dosya 5MB\'dan büyük olamaz.', 'error'); return; }
+  if (/\.xlsx$/i.test(file.name)) {
+    file.arrayBuffer().then(xlsxRows)
+      .then(rows => parseTopluRows(rows.filter(r => r.some(c => String(c).trim())), file.name))
+      .catch(err => showTopluHata('Excel dosyası okunamadı: ' + err.message));
+    return;
+  }
   const reader = new FileReader();
   reader.onload = e => {
     let text = e.target.result;
@@ -84,14 +87,22 @@ function parseCSVText(text, fileName) {
 
   // Ayracı otomatik algıla
   const sep = lines[0].includes(';') ? ';' : ',';
+  parseTopluRows(lines.map(l => parseCSVLine(l, sep)), fileName);
+}
 
-  const headerLine = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g, ''));
+// Satır dizisinden (CSV veya XLSX) ürünleri çıkar; ilk satır başlık
+function parseTopluRows(rows, fileName) {
+  if (rows.length < 2) {
+    showTopluHata('Dosya boş veya yalnızca başlık satırı içeriyor.');
+    return;
+  }
+  const headerLine = rows[0].map(h => String(h).trim());
   // Sütun indekslerini bul (başlıklara göre esnek eşleşme)
   const kolon = (isim) => headerLine.findIndex(h => h.toLowerCase().includes(isim.toLowerCase()));
   const iAd   = kolon('Ürün Ad');
   const iKod  = kolon('Stok');
   const iAcik = kolon('Açıkl');
-  const iBirim = kolon('Birim');
+  const iBirim = headerLine.findIndex(h => h.toLowerCase() === 'birim'); // 'Para Birimi' ile karışmasın
   const iFiyat = kolon('Fiyat');
   const iPara  = kolon('Para');
   const iGorsel = kolon('Görsel');
@@ -104,10 +115,7 @@ function parseCSVText(text, fileName) {
   const hatalar = [];
   const parsed  = [];
 
-  lines.slice(1).forEach((line, idx) => {
-    if (!line.trim()) return;
-    // Tırnaklı alanları doğru parse et
-    const cols = parseCSVLine(line, sep);
+  rows.slice(1).forEach((cols, idx) => {
     const ad   = (cols[iAd] || '').trim();
     const fiyatStr = (cols[iFiyat] || '').trim().replace(',', '.');
     const fiyat = parseFloat(fiyatStr);

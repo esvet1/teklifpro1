@@ -86,7 +86,9 @@ function _applyWizardLoad(t, mode) {
       miktar:     k.miktar,
       // kaynak (orijinal) birim fiyatı geri yükle; yoksa birimFiyat'a düş
       birimFiyat: (k.birimFiyatKaynak != null ? k.birimFiyatKaynak : k.birimFiyat),
-      iskonto:    k.iskonto || 0
+      iskonto:    k.iskonto || 0,
+      // kalemin kendi para birimi (eski teklifler: üründen, yoksa teklifin kaynak parası)
+      para:       k.para || (state.urunler.find(x => x.id === k.urunId) || {}).para || t.kaynakPara || t.currency || 'TRY'
     };
   });
 
@@ -313,7 +315,7 @@ function toggleUrun(id) {
   if (state.wizard.secilenUrunler[id]) {
     delete state.wizard.secilenUrunler[id];
   } else {
-    state.wizard.secilenUrunler[id] = { miktar:1, birimFiyat:u.fiyat, iskonto:0 };
+    state.wizard.secilenUrunler[id] = { miktar:1, birimFiyat:u.fiyat, iskonto:0, para:u.para||'TRY' };
   }
   // Kaynak para birimini seçili ürünlerden algıla
   updateKaynakPara();
@@ -322,12 +324,14 @@ function toggleUrun(id) {
   renderKalemler();
 }
 
-// Seçili ürünlerin para birimini kaynak para olarak belirle (ilk üründen)
+// Kur gereken (teklif biriminden farklı) para birimini belirle.
+// Teklif birimindeki kalemler çevrilmez; yalnızca farklı birimdeki kalemler kurla çevrilir.
+// shortcut: tek kur alanı var; 2+ farklı yabancı birim karışırsa hepsi aynı kurla çevrilir — gerekirse birim başına kur alanı eklenmeli.
 function updateKaynakPara() {
-  const keys = Object.keys(state.wizard.secilenUrunler);
-  if (!keys.length) { state.wizard.kaynakPara = null; return; }
-  const ilk = state.urunler.find(x => x.id === keys[0]);
-  state.wizard.kaynakPara = ilk ? (ilk.para || 'TRY') : 'TRY';
+  const hedef = state.wizard.currency;
+  const farkli = [...new Set(Object.values(state.wizard.secilenUrunler).map(k => k.para || 'TRY'))].filter(p => p !== hedef);
+  state.wizard.kaynakPara = farkli[0] || null;
+  state.wizard.cokluKaynak = farkli.length > 1;
 }
 
 function renderKalemler() {
@@ -364,6 +368,7 @@ function renderKalemler() {
           step="0.01" min="0"
           oninput="kalemFiyat('${uid}',this.value)"
           title="Birim fiyat">
+        <span style="color:var(--text-muted);font-size:0.72rem">${escHtml(k.para||'TRY')}</span>
       </td>
       <td style="white-space:nowrap">
         <input class="kalem-input" style="width:60px" type="number"
@@ -441,8 +446,8 @@ function updateKalemTotals(changedUid) {
 // Kur çevrimi: kaynak para biriminden teklif para birimine
 // Kur her zaman "1 yabancı birim = kur TL" biçiminde girilir.
 // Sistem çarpma/bölme yönünü kendi seçer.
-function convertTutar(tutar) {
-  const kaynak = state.wizard.kaynakPara || state.wizard.currency;
+function convertTutar(tutar, kaynak) {
+  kaynak = kaynak || state.wizard.currency;
   const hedef  = state.wizard.currency;
   if (kaynak === hedef) return tutar;              // aynı birim → çevrim yok
   const kur = parseFloat(state.wizard.kur) || 1;
@@ -463,7 +468,7 @@ function convertTutar(tutar) {
 
 function calcAra(k) {
   const ham = k.miktar * k.birimFiyat * (1 - k.iskonto / 100);
-  return convertTutar(ham);
+  return convertTutar(ham, k.para);
 }
 
 function calcTotals() {
@@ -601,6 +606,7 @@ function updateKurBox() {
     labelText = `1 ${kaynak} = ? ${hedef}`;
     hintText  = `(${kaynak} fiyatlar ${hedef}'ye çevrilecek)`;
   }
+  if (state.wizard.cokluKaynak) hintText += ' ⚠ birden fazla yabancı para birimi var, hepsine aynı kur uygulanır';
   if (lbl) lbl.textContent = labelText;
   if (hint) hint.textContent = hintText;
 
@@ -662,6 +668,7 @@ function kaydetTeklif() {
   state.wizard.not        = document.getElementById('w-not').value.trim();
   { const el=document.getElementById('w-satici-kisi'); state.wizard.saticiKisi = el ? el.value.trim() : ''; }
 
+  updateKaynakPara();
   const kaynak = state.wizard.kaynakPara || state.wizard.currency;
   const kur    = parseFloat(state.wizard.kur) || 1;
 
@@ -670,12 +677,13 @@ function kaydetTeklif() {
     const k   = state.wizard.secilenUrunler[id];
     const ara = calcAra(k);  // teklif para birimine çevrilmiş ara toplam
     // Birim fiyatı da teklif para birimine çevir (tek kalem, iskontosuz)
-    const birimFiyatCevrili = convertTutar(k.birimFiyat);
+    const birimFiyatCevrili = convertTutar(k.birimFiyat, k.para);
     return {
       urunId: id, urunAd: u?.ad||'', aciklama: u?.aciklama||'', gorsel: u?.gorsel||'', birim: u?.birim||'Adet',
       miktar: k.miktar,
       birimFiyat: birimFiyatCevrili,       // proformada gösterilecek (teklif biriminde)
       birimFiyatKaynak: k.birimFiyat,      // orijinal (kaynak birimde)
+      para: k.para || 'TRY',               // birimFiyatKaynak'ın para birimi
       iskonto: k.iskonto,
       araToplam: ara
     };
@@ -834,7 +842,7 @@ function renderTeklifTable(q = '') {
       <td class="hide-mobile">${formatTarih(t.createdAt)}</td>
       <td class="hide-mobile">${escHtml(t.gecerlilik) || '—'}</td>
       <td style="font-weight:600;color:var(--accent)">${formatTutar(t.toplamKdvli, t.currency)}</td>
-      <td class="hide-mobile durum-cell">
+      <td class="durum-cell">
         ${durumRozet(t)}
         <select class="durum-select" onchange="teklifDurumDegistir('${escHtml(t.id)}', this.value)" title="Durumu değiştir">
           <option value="beklemede"${etkin==='beklemede'?' selected':''}>Beklemede</option>

@@ -1,7 +1,7 @@
 // =========================================================
 // SERVICE WORKER — Offline cache (teklif.pro v2)
 // =========================================================
-const CACHE_NAME = 'teklif-pro-v5';
+const CACHE_NAME = 'teklif-pro-v6';
 const ASSETS = [
   '/',
   '/index.html',
@@ -22,6 +22,7 @@ const ASSETS = [
   '/js/dashboard.js',
   '/js/musteri.js',
   '/js/urun.js',
+  '/js/xlsx.js',
   '/js/toplu-urun.js',
   '/js/teklif.js',
   '/js/proforma.js',

@@ -77,6 +77,7 @@ ul { list-style: none; }
 .app-shell {
   display: flex;
   height: 100vh;
+  height: 100dvh; /* mobil tarayıcı adres çubuğu 100vh'yi taşırır → header kayar */
   overflow: hidden;
 }
 
@@ -195,6 +196,7 @@ ul { list-style: none; }
    ========================================================= */
 .main-area {
   flex: 1;
+  min-width: 0; /* geniş tablolar flex öğesini taşırıp sayfayı yatay kaydırmasın */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1420,6 +1422,9 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 
   /* Tablo: kritik olmayan sütunları gizle */
   .hide-mobile { display: none !important; }
+  /* Durum: mobilde rozet yerine sadece seçim kutusu (dokunmaya uygun) */
+  .durum-cell .badge { display: none; }
+  .durum-select { margin-left: 0; font-size: 0.8rem; padding: 6px 4px; }
 
   /* Butonlar tam genişlik (page header hariç) */
   .modal-footer { flex-direction: column-reverse; gap: 8px; }
@@ -2688,3 +2693,42 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   font-family: var(--font-body);
 }
 .btn-google:hover { background: #f7f7f9; border-color: var(--text-dim); }
+
+/* ── Mobil düzeltmeler: sabit header + teklif sihirbazı kaymaları ── */
+@media (max-width: 768px) {
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  .topbar { position: sticky; top: 0; z-index: 50; }
+  .card-header { flex-wrap: wrap; gap: 10px; }
+  .currency-tabs { flex-wrap: wrap; margin-bottom: 0; }
+  #kalemler-wrap { overflow-x: auto; }
+}
+@media (max-width: 640px) {
+  /* Kalem tablosu: her ürün bir kart */
+  .kalem-table thead { display: none; }
+  .kalem-table tbody tr {
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    grid-template-areas: "ad ad ad x" "qty birim fiyat isk" "ara ara ara ara";
+    gap: 6px 10px; align-items: end;
+    padding: 10px 0; border-top: 1px solid var(--border);
+  }
+  .kalem-table tbody td { border: 0; padding: 0; }
+  .kalem-table tbody td:nth-child(1) { grid-area: ad; }
+  .kalem-table tbody td:nth-child(2) { grid-area: qty; }
+  .kalem-table tbody td:nth-child(3) { grid-area: birim; padding-bottom: 8px; }
+  .kalem-table tbody td:nth-child(4) { grid-area: fiyat; }
+  .kalem-table tbody td:nth-child(5) { grid-area: isk; }
+  .kalem-table tbody td:nth-child(6) { grid-area: ara; }
+  .kalem-table tbody td:nth-child(7) { grid-area: x; justify-self: end; align-self: start; }
+  .kalem-table tbody td:nth-child(4) .kalem-input { width: 100% !important; }
+  .kalem-table tbody td:nth-child(2)::before,
+  .kalem-table tbody td:nth-child(4)::before,
+  .kalem-table tbody td:nth-child(5)::before {
+    display: block; font-size: 0.66rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 2px;
+  }
+  .kalem-table tbody td:nth-child(2)::before { content: "Miktar"; }
+  .kalem-table tbody td:nth-child(4)::before { content: "Birim Fiyat"; }
+  .kalem-table tbody td:nth-child(5)::before { content: "İskonto"; }
+  .kalem-table tfoot tr { display: flex; justify-content: space-between; }
+  .kalem-table tfoot td:empty { display: none; }
+}

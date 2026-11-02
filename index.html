@@ -63,7 +63,7 @@
 -->
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&family=Playfair+Display:wght@400;500;600;700;800&family=Lato:wght@300;400;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Nunito:wght@300;400;500;600;700&family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="styles.css?v=6">
+<link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
 
@@ -401,7 +401,7 @@
                 <th class="hide-mobile">Tarih</th>
                 <th class="hide-mobile">Geçerlilik</th>
                 <th>Tutar</th>
-                <th class="hide-mobile">Durum</th>
+                <th>Durum</th>
                 <th>İşlem</th>
               </tr>
             </thead>
@@ -878,7 +878,7 @@
           <div class="toplu-step-desc">Ürün bilgilerini girmek için hazır şablonu indirin. Excel veya Google Sheets ile açabilirsiniz.</div>
           <button class="btn btn-ghost btn-sm" onclick="indir_sablon()" style="margin-top:10px;gap:8px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Şablonu İndir (.csv)
+            Şablonu İndir (.xlsx)
           </button>
         </div>
       </div>
@@ -910,13 +910,13 @@
         <div class="toplu-step-num">3</div>
         <div class="toplu-step-body">
           <div class="toplu-step-title">Doldurulmuş Dosyayı Yükleyin</div>
-          <div class="toplu-step-desc">CSV veya Excel uyumlu dosyayı seçin.</div>
+          <div class="toplu-step-desc">Doldurduğunuz Excel (.xlsx) veya CSV dosyasını seçin.</div>
           <div class="toplu-dropzone" id="toplu-dropzone" onclick="document.getElementById('toplu-file-input').click()">
             <div class="toplu-drop-icon">📂</div>
             <div class="toplu-drop-text">Dosyayı buraya sürükleyin veya tıklayın</div>
-            <div class="toplu-drop-sub">.csv, .txt — maks. 5MB</div>
+            <div class="toplu-drop-sub">.xlsx, .csv — maks. 5MB</div>
           </div>
-          <input type="file" id="toplu-file-input" accept=".csv,.txt" style="display:none" onchange="onTopluFileSelect(this)">
+          <input type="file" id="toplu-file-input" accept=".xlsx,.csv,.txt" style="display:none" onchange="onTopluFileSelect(this)">
         </div>
       </div>
 
@@ -999,23 +999,24 @@
      - Render fonksiyonları → React bileşenlere
      ========================================================= -->
 <!-- Modüller — yükleme SIRASI önemli (birbirlerine bağımlılar) -->
-<script src="js/state.js?v=6"></script>
-<script src="js/db.js?v=6"></script>
-<script src="js/auth.js?v=6"></script>
-<script src="js/security.js?v=6"></script>
-<script src="js/layout.js?v=6"></script>
-<script src="js/helpers.js?v=6"></script>
-<script src="js/dashboard.js?v=6"></script>
-<script src="js/musteri.js?v=6"></script>
-<script src="js/urun.js?v=6"></script>
-<script src="js/toplu-urun.js?v=6"></script>
-<script src="js/teklif.js?v=6"></script>
-<script src="js/proforma.js?v=6"></script>
-<script src="js/firma.js?v=6"></script>
-<script src="js/tasarim.js?v=6"></script>
-<script src="js/export.js?v=6"></script>
+<script src="js/state.js?v=7"></script>
+<script src="js/db.js?v=7"></script>
+<script src="js/auth.js?v=7"></script>
+<script src="js/security.js?v=7"></script>
+<script src="js/layout.js?v=7"></script>
+<script src="js/helpers.js?v=7"></script>
+<script src="js/dashboard.js?v=7"></script>
+<script src="js/musteri.js?v=7"></script>
+<script src="js/urun.js?v=7"></script>
+<script src="js/xlsx.js?v=7"></script>
+<script src="js/toplu-urun.js?v=7"></script>
+<script src="js/teklif.js?v=7"></script>
+<script src="js/proforma.js?v=7"></script>
+<script src="js/firma.js?v=7"></script>
+<script src="js/tasarim.js?v=7"></script>
+<script src="js/export.js?v=7"></script>
 <script src="js/cerez.js?v=1"></script>
-<script src="js/init.js?v=6"></script>
+<script src="js/init.js?v=7"></script>
 <script>
   // Service Worker kaydı (PWA)
   if ('serviceWorker' in navigator) {
