@@ -1333,7 +1333,9 @@ textarea.form-input { resize: vertical; min-height: 80px; }
     box-shadow: none;
     width: 260px !important;
   }
-  .sidebar-open .sidebar { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,.12); }
+  .sidebar-open .sidebar { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,.12); z-index: 300; } /* alt nav (200) plan rozetini örtmesin */
+  .sidebar-open .sidebar-overlay { z-index: 250; }
+  .sidebar-footer { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
 
   .main-area { width: 100%; }
   .content { padding: 16px; }
